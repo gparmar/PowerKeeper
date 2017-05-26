@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <EditTextPreference
+        android:id="@+id/email_pref"
+        android:hint="Email to which report will be mailed"
+        android:title="Email"
+        android:key="email"
+        />
+</PreferenceScreen>
