@@ -15,6 +15,7 @@ import java.util.Set;
 import in.tranquilsoft.powerkeeper.data.PowerKeeperContract;
 import in.tranquilsoft.powerkeeper.data.PowerKeeperContract.*;
 import in.tranquilsoft.powerkeeper.data.PowerKeeperDao;
+import in.tranquilsoft.powerkeeper.util.Constants;
 
 /**
  * Created by gparmar on 24/05/17.
@@ -35,13 +36,13 @@ public class PowerConnectionReceiver extends BroadcastReceiver {
             boolean acCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_AC;
             if (chargePlug == BatteryManager.BATTERY_PLUGGED_AC) {
                 ContentValues cv = new ContentValues();
-                cv.put(TimekeeperEntry.DESCRIPTION_COLUMN, "Started charging");
+                cv.put(TimekeeperEntry.DESCRIPTION_COLUMN, Constants.START_MESSAGE);
 //                Timestamp ts = new Timestamp(System.currentTimeMillis());
 //                cv.put(TimekeeperEntry.TIMESTAMP_COLUMN, String);
                 PowerKeeperDao.getInstance(context).insert(cv);
             } else if (chargePlug == 0) {
                 ContentValues cv = new ContentValues();
-                cv.put(TimekeeperEntry.DESCRIPTION_COLUMN, "Stopped charging");
+                cv.put(TimekeeperEntry.DESCRIPTION_COLUMN, Constants.STOP_MESSAGE);
                 PowerKeeperDao.getInstance(context).insert(cv);
             }
 

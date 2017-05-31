@@ -1,6 +1,7 @@
 package in.tranquilsoft.powerkeeper;
 
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -27,8 +28,12 @@ import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.sql.Timestamp;
+
+import in.tranquilsoft.powerkeeper.data.PowerKeeperContract;
 import in.tranquilsoft.powerkeeper.data.PowerKeeperDao;
 import in.tranquilsoft.powerkeeper.util.CommonUtils;
+import in.tranquilsoft.powerkeeper.util.Constants;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -36,6 +41,9 @@ public class MainActivity extends AppCompatActivity {
     private DataAdapter mAdapter;
     private FloatingActionButton fab;
     private ConstraintLayout constraintLayout;
+    private int xEtchingWidth;
+    private DisplayMetrics metrics;
+    private boolean powerSupplyState;
     private BroadcastReceiver dataChangeRcvr = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -136,12 +144,12 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, "email:" + email);
 
         //Setup the chart
-        DisplayMetrics metrics = new DisplayMetrics();
+        metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
         float density = getResources().getDisplayMetrics().density;
         int dpHeight = (int) (metrics.heightPixels / density);
         int dpWidth = (int) (metrics.widthPixels / density);
-        int xEtchingWidth = (dpWidth - 30) / 24;
+        xEtchingWidth = (dpWidth - 30) / 24;
         for (int i = 0; i <= 24; i++) {
             View xetching = getXAxisEtching();
             TextView reading = (TextView) xetching.findViewById(R.id.x_reading);
@@ -155,6 +163,71 @@ public class MainActivity extends AppCompatActivity {
 
             constraintLayout.addView(xetching, lp);
         }
+
+        //Put some dummy data into the DB
+//        ContentValues cv = new ContentValues();
+//        cv.put(PowerKeeperContract.TimekeeperEntry.DESCRIPTION_COLUMN, Constants.STOP_MESSAGE);
+//        PowerKeeperDao.getInstance(this).insert(cv);
+//        cv.put(PowerKeeperContract.TimekeeperEntry.DESCRIPTION_COLUMN, Constants.START_MESSAGE);
+//        PowerKeeperDao.getInstance(this).insert(cv);
+        renderChart();
+    }
+
+    private void renderChart(){
+        Cursor cursor = PowerKeeperDao.getInstance(this).queryForToday();
+        double accumulatedDiffInHours = 0;
+        if (cursor.getCount() > 0) {
+            powerSupplyState = true;
+            long currentTime = CommonUtils.midnightOfToday().getTime();
+            int count = 0;
+            cursor.moveToFirst();
+            do {
+                String desc = cursor.getString(cursor.getColumnIndex(PowerKeeperContract.TimekeeperEntry.DESCRIPTION_COLUMN));
+                String ts = cursor.getString(cursor.getColumnIndex(PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN));
+                Timestamp timestamp = Timestamp.valueOf(ts);
+                if (count==0) {
+                    if (Constants.START_MESSAGE.equals(desc)) {
+                        powerSupplyState = false;
+                    } else {
+                        powerSupplyState = true;
+                    }
+                }
+                long timediff = timestamp.getTime() - currentTime;
+                double diffInHours = (double) timediff/3600000;
+                accumulatedDiffInHours = renderBar(accumulatedDiffInHours,diffInHours);
+
+                currentTime = timestamp.getTime();
+                count++;
+            } while (cursor.moveToNext());
+            long timediff = System.currentTimeMillis() - currentTime;
+            double diffInHours = (double)timediff/3600000;
+            accumulatedDiffInHours = renderBar(accumulatedDiffInHours,diffInHours);
+        }
+    }
+
+    private double renderBar(double accumulatedDiffInHours,double diffInHours) {
+        View bar = new View(this);
+        ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(CommonUtils.getDPI(diffInHours*xEtchingWidth, metrics),
+                CommonUtils.getDPI(20, metrics));
+        if (!powerSupplyState) {
+            bar.setBackgroundColor(getResources().getColor(android.R.color.holo_red_dark));
+        } else {
+            bar.setBackgroundColor(getResources().getColor(android.R.color.holo_green_dark  ));
+        }
+        lp.leftToRight = R.id.constraint_layout;
+        lp.bottomToTop = R.id.x_axis;
+        //lp.rightToRight = R.id.constraint_layout;
+        //lp.bottomMargin = CommonUtils.getDPI(30, metrics);
+        //lp.rightMargin = CommonUtils.getDPI(100, metrics);
+        lp.leftMargin = CommonUtils.getDPI(30+accumulatedDiffInHours*xEtchingWidth
+                ,metrics);
+        constraintLayout.addView(bar, lp);
+        if (powerSupplyState){
+            powerSupplyState = false;
+        } else if (!powerSupplyState){
+            powerSupplyState = true;
+        }
+        return accumulatedDiffInHours+diffInHours;
     }
 
     private View getXAxisEtching() {
