@@ -164,21 +164,15 @@ public class MainActivity extends AppCompatActivity {
             constraintLayout.addView(xetching, lp);
         }
 
-        //Put some dummy data into the DB
-//        ContentValues cv = new ContentValues();
-//        cv.put(PowerKeeperContract.TimekeeperEntry.DESCRIPTION_COLUMN, Constants.STOP_MESSAGE);
-//        PowerKeeperDao.getInstance(this).insert(cv);
-//        cv.put(PowerKeeperContract.TimekeeperEntry.DESCRIPTION_COLUMN, Constants.START_MESSAGE);
-//        PowerKeeperDao.getInstance(this).insert(cv);
         renderChart();
     }
 
     private void renderChart(){
         Cursor cursor = PowerKeeperDao.getInstance(this).queryForToday();
         double accumulatedDiffInHours = 0;
+        long currentTime = CommonUtils.midnightOfToday().getTime();
         if (cursor.getCount() > 0) {
             powerSupplyState = true;
-            long currentTime = CommonUtils.midnightOfToday().getTime();
             int count = 0;
             cursor.moveToFirst();
             do {
@@ -199,6 +193,22 @@ public class MainActivity extends AppCompatActivity {
                 currentTime = timestamp.getTime();
                 count++;
             } while (cursor.moveToNext());
+            long timediff = System.currentTimeMillis() - currentTime;
+            double diffInHours = (double)timediff/3600000;
+            accumulatedDiffInHours = renderBar(accumulatedDiffInHours,diffInHours);
+        } else {
+            Cursor cursor1 = PowerKeeperDao.getInstance(this).queryForOneBeforeToday();
+            if (cursor1.getCount()>0) {
+                cursor1.moveToFirst();
+                String desc = cursor1.getString(cursor1.getColumnIndex(PowerKeeperContract.TimekeeperEntry.DESCRIPTION_COLUMN));
+                if (Constants.START_MESSAGE.equals(desc)) {
+                    powerSupplyState = true;
+                } else {
+                    powerSupplyState = false;
+                }
+            } else {
+                powerSupplyState = true;
+            }
             long timediff = System.currentTimeMillis() - currentTime;
             double diffInHours = (double)timediff/3600000;
             accumulatedDiffInHours = renderBar(accumulatedDiffInHours,diffInHours);

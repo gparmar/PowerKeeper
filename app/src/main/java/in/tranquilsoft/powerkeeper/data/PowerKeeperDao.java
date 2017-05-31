@@ -49,6 +49,15 @@ public class PowerKeeperDao {
                         , new String[]{datetime}, null, null,
                         PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN);
     }
+    public Cursor queryForOneBeforeToday() {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String datetime = sdf.format(CommonUtils.midnightOfToday());
+        return dbHelper.getReadableDatabase()
+                .query(PowerKeeperContract.TimekeeperEntry.TABLE_NAME
+                        , null, PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN+"<?"
+                        , new String[]{datetime}, null, null,
+                        "1");
+    }
 
     public void deleteAll() {
         dbHelper.getWritableDatabase().delete(PowerKeeperContract.TimekeeperEntry.TABLE_NAME, null, null);
