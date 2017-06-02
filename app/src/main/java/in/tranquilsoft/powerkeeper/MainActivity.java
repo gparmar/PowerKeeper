@@ -1,7 +1,6 @@
 package in.tranquilsoft.powerkeeper;
 
 import android.content.BroadcastReceiver;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -9,6 +8,7 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
@@ -24,12 +24,18 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CalendarView;
 import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
+import in.tranquilsoft.powerkeeper.data.AndroidDatabaseManager;
 import in.tranquilsoft.powerkeeper.data.PowerKeeperContract;
 import in.tranquilsoft.powerkeeper.data.PowerKeeperDao;
 import in.tranquilsoft.powerkeeper.util.CommonUtils;
@@ -40,10 +46,15 @@ public class MainActivity extends AppCompatActivity {
     private PowerKeeperDao mPowerDao;
     private DataAdapter mAdapter;
     private FloatingActionButton fab;
+    private RecyclerView recyclerView;
     private ConstraintLayout constraintLayout;
     private int xEtchingWidth;
     private DisplayMetrics metrics;
     private boolean powerSupplyState;
+    private CalendarView calendarView;
+    private Date selectedDate;
+    private List<View> greenAndRedBars = new ArrayList<>();
+
     private BroadcastReceiver dataChangeRcvr = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -51,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
             mAdapter.setCursor(cursor);
         }
     };
+
     private View.OnClickListener fabOnClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
@@ -62,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
                 return;
             }
             AlertDialog.Builder dialogBuilder = new AlertDialog.Builder(MainActivity.this);
-// ...Irrelevant code for customizing the buttons and title
+
             LayoutInflater inflater = getLayoutInflater();
             View dialogView = inflater.inflate(R.layout.email_options, null);
             dialogBuilder.setMessage("Select the period of report to export");
@@ -92,15 +104,7 @@ public class MainActivity extends AppCompatActivity {
                     });
             AlertDialog alertDialog = dialogBuilder.create();
             alertDialog.show();
-//                View options = getLayoutInflater().inflate(R.layout.email_options, null, false);
-//
-//                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-//                builder
-//                        //.setMessage("Select the period of report")
-//                        .setView(view);
 
-//                AlertDialog dialog = builder.create();
-//                dialog.show();
         }
     };
 
@@ -109,16 +113,26 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+        if (selectedDate == null) {
+            selectedDate = new Date();
+        }
+
+        recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         fab = (FloatingActionButton) findViewById(R.id.fab);
         constraintLayout = (ConstraintLayout) findViewById(R.id.constraint_layout);
-        fab.setOnClickListener(fabOnClickListener);
+        calendarView = (CalendarView) findViewById(R.id.calendarView);
 
+        fab.setOnClickListener(fabOnClickListener);
         mPowerDao = PowerKeeperDao.getInstance(this);
 
-        Cursor cursor = mPowerDao.queryAll();
-        mAdapter = new DataAdapter(this, cursor);
-        recyclerView.setAdapter(mAdapter);
+        calendarView.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
+            @Override
+            public void onSelectedDayChange(@NonNull CalendarView calendarView, int year, int month, int day) {
+                selectedDate = CommonUtils.getDate(year, month, day);
+                refreshPage();
+            }
+        });
+
         LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(layoutManager);
 
@@ -159,18 +173,24 @@ public class MainActivity extends AppCompatActivity {
 
             lp.leftToRight = R.id.constraint_layout;
             lp.topToBottom = R.id.x_axis;
-            lp.leftMargin = CommonUtils.getDPI(28 + i * xEtchingWidth, metrics);
+            lp.leftMargin = CommonUtils.getDPI(10 + i * xEtchingWidth, metrics);
 
             constraintLayout.addView(xetching, lp);
         }
 
-        renderChart();
+        refreshPage();
     }
 
-    private void renderChart(){
-        Cursor cursor = PowerKeeperDao.getInstance(this).queryForToday();
+    private void renderChart(Cursor cursor) {
+        //Cursor cursor = PowerKeeperDao.getInstance(this).queryForToday();
         double accumulatedDiffInHours = 0;
-        long currentTime = CommonUtils.midnightOfToday().getTime();
+        long currentTime = CommonUtils.startOfDay(selectedDate).getTime();
+        Iterator<View> views = greenAndRedBars.iterator();
+        while (views.hasNext()) {
+            View view = views.next();
+            constraintLayout.removeView(view);
+        }
+        greenAndRedBars.clear();
         if (cursor.getCount() > 0) {
             powerSupplyState = true;
             int count = 0;
@@ -179,7 +199,7 @@ public class MainActivity extends AppCompatActivity {
                 String desc = cursor.getString(cursor.getColumnIndex(PowerKeeperContract.TimekeeperEntry.DESCRIPTION_COLUMN));
                 String ts = cursor.getString(cursor.getColumnIndex(PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN));
                 Timestamp timestamp = Timestamp.valueOf(ts);
-                if (count==0) {
+                if (count == 0) {
                     if (Constants.START_MESSAGE.equals(desc)) {
                         powerSupplyState = false;
                     } else {
@@ -187,18 +207,24 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
                 long timediff = timestamp.getTime() - currentTime;
-                double diffInHours = (double) timediff/3600000;
-                accumulatedDiffInHours = renderBar(accumulatedDiffInHours,diffInHours);
+                double diffInHours = (double) timediff / 3600000;
+                accumulatedDiffInHours = renderBar(accumulatedDiffInHours, diffInHours);
 
                 currentTime = timestamp.getTime();
                 count++;
             } while (cursor.moveToNext());
-            long timediff = System.currentTimeMillis() - currentTime;
-            double diffInHours = (double)timediff/3600000;
-            accumulatedDiffInHours = renderBar(accumulatedDiffInHours,diffInHours);
+            if (CommonUtils.isDatesSame(selectedDate, new Date())) {
+                long timediff = System.currentTimeMillis() - currentTime;
+                double diffInHours = (double) timediff / 3600000;
+                accumulatedDiffInHours = renderBar(accumulatedDiffInHours, diffInHours);
+            } else {
+                long timediff = CommonUtils.endOfDay(selectedDate).getTime() - currentTime;
+                double diffInHours = (double) timediff / 3600000;
+                accumulatedDiffInHours = renderBar(accumulatedDiffInHours, diffInHours);
+            }
         } else {
-            Cursor cursor1 = PowerKeeperDao.getInstance(this).queryForOneBeforeToday();
-            if (cursor1.getCount()>0) {
+            Cursor cursor1 = PowerKeeperDao.getInstance(this).queryForOneBeforeDay(selectedDate);
+            if (cursor1.getCount() > 0) {
                 cursor1.moveToFirst();
                 String desc = cursor1.getString(cursor1.getColumnIndex(PowerKeeperContract.TimekeeperEntry.DESCRIPTION_COLUMN));
                 if (Constants.START_MESSAGE.equals(desc)) {
@@ -210,39 +236,51 @@ public class MainActivity extends AppCompatActivity {
                 powerSupplyState = true;
             }
             long timediff = System.currentTimeMillis() - currentTime;
-            double diffInHours = (double)timediff/3600000;
-            accumulatedDiffInHours = renderBar(accumulatedDiffInHours,diffInHours);
+            double diffInHours = (double) timediff / 3600000;
+            accumulatedDiffInHours = renderBar(accumulatedDiffInHours, diffInHours);
         }
     }
 
-    private double renderBar(double accumulatedDiffInHours,double diffInHours) {
+    private double renderBar(double accumulatedDiffInHours, double diffInHours) {
         View bar = new View(this);
-        ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(CommonUtils.getDPI(diffInHours*xEtchingWidth, metrics),
+        ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(CommonUtils.getDPI(diffInHours * xEtchingWidth, metrics),
                 CommonUtils.getDPI(20, metrics));
         if (!powerSupplyState) {
             bar.setBackgroundColor(getResources().getColor(android.R.color.holo_red_dark));
         } else {
-            bar.setBackgroundColor(getResources().getColor(android.R.color.holo_green_dark  ));
+            bar.setBackgroundColor(getResources().getColor(android.R.color.holo_green_dark));
         }
         lp.leftToRight = R.id.constraint_layout;
         lp.bottomToTop = R.id.x_axis;
         //lp.rightToRight = R.id.constraint_layout;
         //lp.bottomMargin = CommonUtils.getDPI(30, metrics);
         //lp.rightMargin = CommonUtils.getDPI(100, metrics);
-        lp.leftMargin = CommonUtils.getDPI(30+accumulatedDiffInHours*xEtchingWidth
-                ,metrics);
+        lp.leftMargin = CommonUtils.getDPI(10 + accumulatedDiffInHours * xEtchingWidth
+                , metrics);
         constraintLayout.addView(bar, lp);
-        if (powerSupplyState){
+        greenAndRedBars.add(bar);
+        if (powerSupplyState) {
             powerSupplyState = false;
-        } else if (!powerSupplyState){
+        } else if (!powerSupplyState) {
             powerSupplyState = true;
         }
-        return accumulatedDiffInHours+diffInHours;
+        return accumulatedDiffInHours + diffInHours;
     }
 
     private View getXAxisEtching() {
         View etching = getLayoutInflater().inflate(R.layout.x_axis_etching, null, false);
         return etching;
+    }
+
+    private void refreshPage(){
+        Cursor cursor = mPowerDao.queryForDay(selectedDate);
+        if (mAdapter == null) {
+            mAdapter = new DataAdapter(this, cursor);
+            recyclerView.setAdapter(mAdapter);
+        } else {
+            mAdapter.setCursor(cursor);
+        }
+        renderChart(cursor);
     }
 
     @Override
@@ -267,9 +305,8 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.schedule_job) {
-            Intent intent = new Intent(this, ScheduleJobActivity.class);
-            startActivity(intent);
+        if (item.getItemId() == R.id.refresh) {
+            refreshPage();
         } else if (item.getItemId() == R.id.settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
@@ -292,6 +329,9 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
             builder.create().show();
+        } else if (item.getItemId() == R.id.database) {
+            Intent intent = new Intent(this, AndroidDatabaseManager.class);
+            startActivity(intent);
         }
         return super.onOptionsItemSelected(item);
     }

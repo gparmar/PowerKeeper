@@ -6,7 +6,7 @@ import android.database.Cursor;
 import android.util.Log;
 
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import java.util.Date;
 
 import in.tranquilsoft.powerkeeper.util.CommonUtils;
 
@@ -39,19 +39,27 @@ public class PowerKeeperDao {
         return dbHelper.getReadableDatabase().query(PowerKeeperContract.TimekeeperEntry.TABLE_NAME,
                 null, null, null, null, null, PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN + " DESC");
     }
-
-    public Cursor queryForToday() {
+    public Cursor queryForDay(Date date) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String datetime = sdf.format(CommonUtils.midnightOfToday());
+        String datetime = sdf.format(CommonUtils.startOfDay(date));
         return dbHelper.getReadableDatabase()
                 .query(PowerKeeperContract.TimekeeperEntry.TABLE_NAME
                         , null, PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN+">?"
                         , new String[]{datetime}, null, null,
                         PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN);
     }
-    public Cursor queryForOneBeforeToday() {
+    public Cursor queryForToday() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        String datetime = sdf.format(CommonUtils.midnightOfToday());
+        String datetime = sdf.format(CommonUtils.startOfToday());
+        return dbHelper.getReadableDatabase()
+                .query(PowerKeeperContract.TimekeeperEntry.TABLE_NAME
+                        , null, PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN+">?"
+                        , new String[]{datetime}, null, null,
+                        PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN);
+    }
+    public Cursor queryForOneBeforeDay(Date date) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String datetime = sdf.format(CommonUtils.startOfDay(date));
         return dbHelper.getReadableDatabase()
                 .query(PowerKeeperContract.TimekeeperEntry.TABLE_NAME
                         , null, PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN+"<?"

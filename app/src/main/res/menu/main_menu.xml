@@ -4,19 +4,30 @@
     <item
         android:id="@+id/settings"
         android:title="Settings"
-        android:icon="@android:drawable/ic_menu_preferences"
+        android:icon="@drawable/ic_action_settings"
         app:showAsAction="always"
         android:orderInCategory="8"
         />
     <item
+        android:id="@+id/refresh"
+        android:title="Refresh"
+        android:icon="@drawable/ic_action_autorenew"
+        app:showAsAction="always"
+        android:orderInCategory="10"
+        />
+
+    <item
         android:id="@+id/delete_all"
         android:title="Delete all"
         android:icon="@android:drawable/ic_menu_delete"
-        app:showAsAction="always"
-        android:orderInCategory="9"
-        />
-    <item android:id="@+id/schedule_job"
-        android:title="Scheduler"
         app:showAsAction="never"
-        android:orderInCategory="10"/>
+        android:orderInCategory="19"
+        />
+    <item
+        android:id="@+id/database"
+        android:title="Query Database"
+        android:icon="@drawable/ic_database"
+        app:showAsAction="never"
+        android:orderInCategory="25"
+        />
 </menu>

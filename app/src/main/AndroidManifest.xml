@@ -35,6 +35,8 @@
             android:parentActivityName=".MainActivity" />
         <activity android:name=".SettingsActivity"
             android:parentActivityName=".MainActivity"></activity>
+        <activity android:name=".data.AndroidDatabaseManager"
+            android:parentActivityName=".MainActivity"/>
     </application>
 
 </manifest>

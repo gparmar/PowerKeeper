@@ -15,6 +15,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import in.tranquilsoft.powerkeeper.data.PowerKeeperContract.*;
+import in.tranquilsoft.powerkeeper.util.Constants;
+
 /**
  * Created by gparmar on 24/05/17.
  */
@@ -42,7 +44,13 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.MyViewHolder>{
         String desc = mCursor.getString(mCursor.getColumnIndex(TimekeeperEntry.DESCRIPTION_COLUMN));
         String ts = mCursor.getString(mCursor.getColumnIndex(TimekeeperEntry.TIMESTAMP_COLUMN));
         Timestamp timestamp = Timestamp.valueOf(ts);
-        holder.description.setText(desc);
+        if (Constants.START_MESSAGE.equals(desc)) {
+            holder.started.setVisibility(View.VISIBLE);
+            holder.stopped.setVisibility(View.GONE);
+        } else {
+            holder.started.setVisibility(View.GONE);
+            holder.stopped.setVisibility(View.VISIBLE);
+        }
         holder.timestamp.setText(sdf.format(new Date(timestamp.getTime())));
         holder.id = mCursor.getLong(mCursor.getColumnIndex(TimekeeperEntry._ID));
     }
@@ -59,11 +67,13 @@ public class DataAdapter extends RecyclerView.Adapter<DataAdapter.MyViewHolder>{
 
     public class MyViewHolder extends RecyclerView.ViewHolder {
         long id;
-        TextView description;
+        View stopped;
+        View started;
         TextView timestamp;
         public MyViewHolder(View itemView) {
             super(itemView);
-            description = (TextView) itemView.findViewById(R.id.desc);
+            started = itemView.findViewById(R.id.power_started);
+            stopped = itemView.findViewById(R.id.power_stopped);
             timestamp = (TextView) itemView.findViewById(R.id.time_stamp);
         }
     }
