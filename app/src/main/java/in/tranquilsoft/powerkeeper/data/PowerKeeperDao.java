@@ -39,6 +39,12 @@ public class PowerKeeperDao {
         return dbHelper.getReadableDatabase().query(PowerKeeperContract.TimekeeperEntry.TABLE_NAME,
                 null, null, null, null, null, PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN + " DESC");
     }
+
+    public Cursor queryForFirstDataDate() {
+        return dbHelper.getReadableDatabase().query(PowerKeeperContract.TimekeeperEntry.TABLE_NAME,
+                null, null, null, null, null, "1");
+    }
+
     public Cursor queryForDay(Date date) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String datetime = sdf.format(CommonUtils.startOfDay(date));

@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
+import android.os.AsyncTask;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
@@ -31,6 +32,7 @@ import android.widget.Toast;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -58,7 +60,7 @@ public class MainActivity extends AppCompatActivity {
     private BroadcastReceiver dataChangeRcvr = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Cursor cursor = mPowerDao.queryAll();
+            Cursor cursor = mPowerDao.queryForDay(selectedDate);
             mAdapter.setCursor(cursor);
         }
     };
@@ -132,6 +134,32 @@ public class MainActivity extends AppCompatActivity {
                 refreshPage();
             }
         });
+        //Set the max date on calendar view so that it doesn't show all months.
+        long maxTime = CommonUtils.endOfDay(selectedDate).getTime();
+        calendarView.setMaxDate(maxTime);
+        //calendarView.setMinDate(CommonUtils.startOfMonth(selectedDate).getTime());
+        new AsyncTask<Void, Void, Cursor>(){
+            @Override
+            protected Cursor doInBackground(Void... voids) {
+                Cursor cursor = PowerKeeperDao.getInstance(MainActivity.this).queryForFirstDataDate();
+                return cursor;
+            }
+
+            @Override
+            protected void onPostExecute(Cursor cursor) {
+                long minTime=0;
+                if (cursor == null || cursor.getCount() == 0) {
+                    minTime = CommonUtils.startOfDay(selectedDate).getTime();
+                } else {
+                    cursor.moveToFirst();
+                    String ts = cursor.getString(cursor.getColumnIndex(PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN));
+                    Timestamp timestamp = Timestamp.valueOf(ts);
+                    minTime = CommonUtils.startOfDay(new Date(timestamp.getTime())).getTime();
+                }
+                calendarView.setMinDate(minTime);
+            }
+        }.execute();
+
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(layoutManager);
@@ -147,7 +175,7 @@ public class MainActivity extends AppCompatActivity {
                 //Remove swiped item from list and notify the RecyclerView
                 Log.d(TAG, "delete the id:" + ((DataAdapter.MyViewHolder) viewHolder).id);
                 PowerKeeperDao.getInstance(MainActivity.this).delete(((DataAdapter.MyViewHolder) viewHolder).id);
-                mAdapter.setCursor(PowerKeeperDao.getInstance(MainActivity.this).queryAll());
+                mAdapter.setCursor(PowerKeeperDao.getInstance(MainActivity.this).queryForDay(selectedDate));
             }
         };
 

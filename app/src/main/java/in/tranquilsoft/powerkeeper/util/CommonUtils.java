@@ -45,6 +45,15 @@ public class CommonUtils {
         cal.set(Calendar.SECOND,0);
         return cal.getTime();
     }
+    public static Date startOfMonth(Date date) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        cal.set(Calendar.HOUR_OF_DAY,0);
+        cal.set(Calendar.MINUTE,0);
+        cal.set(Calendar.SECOND,0);
+        return cal.getTime();
+    }
 
     public static Date getDate(int year, int month, int day){
         Calendar calendar = Calendar.getInstance();
