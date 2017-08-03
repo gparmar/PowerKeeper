@@ -6,7 +6,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.os.Build;
 import android.os.PersistableBundle;
-import android.os.SystemClock;
 import android.support.annotation.RequiresApi;
 
 import in.tranquilsoft.powerkeeper.service.CreateReportService;

@@ -5,10 +5,12 @@ import android.content.Context;
 import android.database.Cursor;
 import android.util.Log;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import in.tranquilsoft.powerkeeper.util.CommonUtils;
+import in.tranquilsoft.powerkeeper.util.Constants;
 
 /**
  * Created by gparmar on 24/05/17.
@@ -30,8 +32,12 @@ public class PowerKeeperDao {
         dbHelper = new PowerDbHelper(context);
     }
 
-    public void insert(ContentValues cv) {
+    public void insertTimekeeper(ContentValues cv) {
         dbHelper.getWritableDatabase().insert(PowerKeeperContract.TimekeeperEntry.TABLE_NAME,
+                null, cv);
+    }
+    public void insertDatekeeper(ContentValues cv) {
+        dbHelper.getWritableDatabase().insert(PowerKeeperContract.DateEntry.TABLE_NAME,
                 null, cv);
     }
 
@@ -42,7 +48,7 @@ public class PowerKeeperDao {
 
     public Cursor queryForFirstDataDate() {
         return dbHelper.getReadableDatabase().query(PowerKeeperContract.TimekeeperEntry.TABLE_NAME,
-                null, null, null, null, null, "1");
+                null, null, null, null, null, PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN+" ASC LIMIT 1");
     }
 
     public Cursor queryForDay(Date date) {
@@ -80,5 +86,24 @@ public class PowerKeeperDao {
     public void delete(long id) {
         dbHelper.getWritableDatabase().delete(PowerKeeperContract.TimekeeperEntry.TABLE_NAME
                 , PowerKeeperContract.TimekeeperEntry._ID + "=?", new String[]{id + ""});
+    }
+
+    public Cursor getAllDates(){
+        return dbHelper.getReadableDatabase().query(PowerKeeperContract.DateEntry.TABLE_NAME,
+                null,null,null,null,null,null);
+    }
+
+    public Cursor getValuesForDate(String date) {
+        try {
+            String dbDateFormat = Constants.DB_SHORT_FORMAT.format(Constants.SHORT_FORMAT.parse(date));
+            return dbHelper.getReadableDatabase().query(PowerKeeperContract.TimekeeperEntry.TABLE_NAME,
+                    null, PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN+" >=? and "+
+                            PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN+" <=? ",
+                    new String[]{dbDateFormat+" 00:00:00", dbDateFormat+" 23:59:59"},null,null,
+                    PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN+" asc");
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

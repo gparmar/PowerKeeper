@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "232507461264",
+    "firebase_url": "https://powerkeeper-57b7e.firebaseio.com",
+    "project_id": "powerkeeper-57b7e",
+    "storage_bucket": "powerkeeper-57b7e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:232507461264:android:8ced5c007ea65bf3",
+        "android_client_info": {
+          "package_name": "in.tranquilsoft.powerkeeper"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "232507461264-c2u3e4iu73per54jng3k2i7tvgf8vd7q.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "in.tranquilsoft.powerkeeper",
+            "certificate_hash": "5de34340aba8f8f3f8c8c1f8754f7b2cef292f0d"
+          }
+        },
+        {
+          "client_id": "232507461264-t83802cv3b5phkjv9ac2bvl63nsq82u9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCMTu2AkHg82OeerWL7fAH_QuffXEp4lE"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "232507461264-t83802cv3b5phkjv9ac2bvl63nsq82u9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

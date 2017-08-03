@@ -13,17 +13,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
-        <ScrollView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:id="@+id/scrollView"
-            >
-
-            <CalendarView
-                android:id="@+id/calendarView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-        </ScrollView>
 
         <View
             android:id="@+id/x_axis"
@@ -36,7 +25,7 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/scrollView"
+            app:layout_constraintTop_toBottomOf="parent"
             tools:layout_editor_absoluteX="8dp" />
 
 
@@ -58,5 +47,20 @@
         android:layout_alignParentRight="true"
         android:src="@android:drawable/ic_dialog_email" />
 
-
+    <LinearLayout android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_centerInParent="true"
+        android:gravity="center_horizontal"
+        android:visibility="gone">
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Exporting data..."/>
+    </LinearLayout>
 </RelativeLayout>

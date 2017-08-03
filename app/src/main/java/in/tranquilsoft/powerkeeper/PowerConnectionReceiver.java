@@ -6,13 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.BatteryManager;
-import android.os.Bundle;
-import android.util.Log;
 
-import java.sql.Timestamp;
-import java.util.Set;
-
-import in.tranquilsoft.powerkeeper.data.PowerKeeperContract;
 import in.tranquilsoft.powerkeeper.data.PowerKeeperContract.*;
 import in.tranquilsoft.powerkeeper.data.PowerKeeperDao;
 import in.tranquilsoft.powerkeeper.util.Constants;
@@ -39,11 +33,11 @@ public class PowerConnectionReceiver extends BroadcastReceiver {
                 cv.put(TimekeeperEntry.DESCRIPTION_COLUMN, Constants.START_MESSAGE);
 //                Timestamp ts = new Timestamp(System.currentTimeMillis());
 //                cv.put(TimekeeperEntry.TIMESTAMP_COLUMN, String);
-                PowerKeeperDao.getInstance(context).insert(cv);
+                PowerKeeperDao.getInstance(context).insertTimekeeper(cv);
             } else if (chargePlug == 0) {
                 ContentValues cv = new ContentValues();
                 cv.put(TimekeeperEntry.DESCRIPTION_COLUMN, Constants.STOP_MESSAGE);
-                PowerKeeperDao.getInstance(context).insert(cv);
+                PowerKeeperDao.getInstance(context).insertTimekeeper(cv);
             }
 
             Intent dataChangedBroadcast = new Intent("DATA_CHANGED");

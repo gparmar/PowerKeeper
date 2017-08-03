@@ -26,20 +26,25 @@ public class PowerDbHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase sqLiteDatabase) {
-        // Create a table to hold waitlist data
-        final String SQL_CREATE_WAITLIST_TABLE = "CREATE TABLE " + TimekeeperEntry.TABLE_NAME + " (" +
+        // Create a table to hold timekeeper data
+        final String SQL_CREATE_DATES_TABLE = "CREATE TABLE " + DateEntry.TABLE_NAME + " (" +
+                DateEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
+                DateEntry.DATE_COLUMN + " TEXT NOT NULL" +
+                ")";
+        final String SQL_CREATE_TIMEKEEPER_TABLE = "CREATE TABLE " + TimekeeperEntry.TABLE_NAME + " (" +
                 TimekeeperEntry._ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
                 TimekeeperEntry.DESCRIPTION_COLUMN + " TEXT NOT NULL, " +
                 TimekeeperEntry.TIMESTAMP_COLUMN + " DATETIME DEFAULT (datetime('now','localtime'))" +
-                "); ";
+                ")";
 
-        sqLiteDatabase.execSQL(SQL_CREATE_WAITLIST_TABLE);
+        sqLiteDatabase.execSQL(SQL_CREATE_TIMEKEEPER_TABLE);
+        sqLiteDatabase.execSQL(SQL_CREATE_DATES_TABLE);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase sqLiteDatabase, int i, int i1) {
-        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TimekeeperEntry.TABLE_NAME);
-        onCreate(sqLiteDatabase);
+//        sqLiteDatabase.execSQL("DROP TABLE IF EXISTS " + TimekeeperEntry.TABLE_NAME);
+//        onCreate(sqLiteDatabase);
     }
 
     public ArrayList<Cursor> getData(String Query){

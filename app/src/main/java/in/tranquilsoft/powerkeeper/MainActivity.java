@@ -1,15 +1,17 @@
 package in.tranquilsoft.powerkeeper;
 
+import android.app.Dialog;
 import android.content.BroadcastReceiver;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.database.Cursor;
-import android.os.AsyncTask;
+import android.net.Uri;
+import android.os.Environment;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v7.app.AlertDialog;
@@ -25,14 +27,18 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CalendarView;
 import android.widget.RadioButton;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.FilenameFilter;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -45,6 +51,7 @@ import in.tranquilsoft.powerkeeper.util.Constants;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
+    public static final String POWERKEEPER_STORAGE_FOLDER = ".PowerKeeper";
     private PowerKeeperDao mPowerDao;
     private DataAdapter mAdapter;
     private FloatingActionButton fab;
@@ -53,9 +60,17 @@ public class MainActivity extends AppCompatActivity {
     private int xEtchingWidth;
     private DisplayMetrics metrics;
     private boolean powerSupplyState;
-    private CalendarView calendarView;
+    //private CalendarView calendarView;
     private Date selectedDate;
     private List<View> greenAndRedBars = new ArrayList<>();
+    private View progressBar;
+
+    private String[] mFileList;
+    private File mPath = new File(Environment.getExternalStorageDirectory() +
+            "/"+POWERKEEPER_STORAGE_FOLDER+"/");
+    private String mChosenFile;
+    private static final String FTYPE = ".csv";
+    private static final int DIALOG_LOAD_FILE = 1000;
 
     private BroadcastReceiver dataChangeRcvr = new BroadcastReceiver() {
         @Override
@@ -122,43 +137,34 @@ public class MainActivity extends AppCompatActivity {
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         fab = (FloatingActionButton) findViewById(R.id.fab);
         constraintLayout = (ConstraintLayout) findViewById(R.id.constraint_layout);
-        calendarView = (CalendarView) findViewById(R.id.calendarView);
+        progressBar = findViewById(R.id.progressBar);
 
         fab.setOnClickListener(fabOnClickListener);
         mPowerDao = PowerKeeperDao.getInstance(this);
 
-        calendarView.setOnDateChangeListener(new CalendarView.OnDateChangeListener() {
-            @Override
-            public void onSelectedDayChange(@NonNull CalendarView calendarView, int year, int month, int day) {
-                selectedDate = CommonUtils.getDate(year, month, day);
-                refreshPage();
-            }
-        });
-        //Set the max date on calendar view so that it doesn't show all months.
-        long maxTime = CommonUtils.endOfDay(selectedDate).getTime();
-        calendarView.setMaxDate(maxTime);
-        //calendarView.setMinDate(CommonUtils.startOfMonth(selectedDate).getTime());
-        new AsyncTask<Void, Void, Cursor>(){
-            @Override
-            protected Cursor doInBackground(Void... voids) {
-                Cursor cursor = PowerKeeperDao.getInstance(MainActivity.this).queryForFirstDataDate();
-                return cursor;
-            }
 
-            @Override
-            protected void onPostExecute(Cursor cursor) {
-                long minTime=0;
-                if (cursor == null || cursor.getCount() == 0) {
-                    minTime = CommonUtils.startOfDay(selectedDate).getTime();
-                } else {
-                    cursor.moveToFirst();
-                    String ts = cursor.getString(cursor.getColumnIndex(PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN));
-                    Timestamp timestamp = Timestamp.valueOf(ts);
-                    minTime = CommonUtils.startOfDay(new Date(timestamp.getTime())).getTime();
-                }
-                calendarView.setMinDate(minTime);
-            }
-        }.execute();
+        //calendarView.setMinDate(CommonUtils.startOfMonth(selectedDate).getTime());
+//        new AsyncTask<Void, Void, Cursor>() {
+//            @Override
+//            protected Cursor doInBackground(Void... voids) {
+//                Cursor cursor = PowerKeeperDao.getInstance(MainActivity.this).queryForFirstDataDate();
+//                return cursor;
+//            }
+//
+//            @Override
+//            protected void onPostExecute(Cursor cursor) {
+//                long minTime = 0;
+//                if (cursor == null || cursor.getCount() == 0) {
+//                    minTime = CommonUtils.startOfDay(selectedDate).getTime();
+//                } else {
+//                    cursor.moveToFirst();
+//                    String ts = cursor.getString(cursor.getColumnIndex(PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN));
+//                    Timestamp timestamp = Timestamp.valueOf(ts);
+//                    minTime = CommonUtils.startOfDay(new Date(timestamp.getTime())).getTime();
+//                }
+//                //calendarView.setMinDate(minTime);
+//            }
+//        }.execute();
 
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
@@ -194,8 +200,8 @@ public class MainActivity extends AppCompatActivity {
         xEtchingWidth = (dpWidth - 30) / 24;
         for (int i = 0; i <= 24; i++) {
             View xetching = getXAxisEtching();
-            TextView reading = (TextView) xetching.findViewById(R.id.x_reading);
-            reading.setText(i + "");
+            //TextView reading = (TextView) xetching.findViewById(R.id.x_reading);
+            //reading.setText(i + "");
             ConstraintLayout.LayoutParams lp = new ConstraintLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
                     ViewGroup.LayoutParams.WRAP_CONTENT);
 
@@ -300,7 +306,7 @@ public class MainActivity extends AppCompatActivity {
         return etching;
     }
 
-    private void refreshPage(){
+    private void refreshPage() {
         Cursor cursor = mPowerDao.queryForDay(selectedDate);
         if (mAdapter == null) {
             mAdapter = new DataAdapter(this, cursor);
@@ -360,7 +366,146 @@ public class MainActivity extends AppCompatActivity {
         } else if (item.getItemId() == R.id.database) {
             Intent intent = new Intent(this, AndroidDatabaseManager.class);
             startActivity(intent);
+        } else if (item.getItemId() == R.id.export_data) {
+            progressBar.setVisibility(View.VISIBLE);
+            Cursor cursor = PowerKeeperDao.getInstance(this).queryAll();
+            if (cursor != null) {
+                File exportDir = new File(Environment.getExternalStorageDirectory() + File.separator + ".PowerKeeper");
+                long freeBytesInternal = new File(getApplicationContext().getFilesDir().getAbsoluteFile().toString()).getFreeSpace();
+                long megAvailable = freeBytesInternal / 1048576;
+                boolean memoryErr = false;
+                if (megAvailable < 0.1) {
+                    Toast.makeText(this,"There is no storage. Storage present" + megAvailable,
+                            Toast.LENGTH_LONG).show();
+                    memoryErr = true;
+                } else {
+                    String exportDirStr = exportDir.toString();// to show in dialogbox
+                    Log.v(TAG, "exportDir path::" + exportDir);
+                    if (!exportDir.exists()) {
+                        exportDir.mkdirs();
+                    }
+                    SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy_HH_mm_ss");
+                    File exportFile = new File(exportDir,"powerkeeper"+
+                            (sdf.format(new Date()))+".csv");
+                    FileWriter out = null;
+                    try {
+                        out = new FileWriter(exportFile);
+                        out.write("Time,Description\n");
+                        while (cursor.moveToNext()) {
+                            String desc = cursor.getString(cursor.getColumnIndex(PowerKeeperContract.TimekeeperEntry.DESCRIPTION_COLUMN));
+                            String ts = cursor.getString(cursor.getColumnIndex(PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN));
+                            Timestamp timestamp = Timestamp.valueOf(ts);
+
+                            out.write(Constants.LONG_FORMAT.format(new Date(timestamp.getTime()))+","+desc+"\n");
+                        }
+                        out.flush();
+
+                    } catch (IOException e) {
+                        Log.e(TAG,"",e);
+                    } finally {
+                        if (out!=null) {
+                            try {
+                                out.close();
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+
+                }
+            }
+            progressBar.setVisibility(View.GONE);
+        } else if (item.getItemId() == R.id.import_data){
+            Intent intent = new Intent()
+                    .setType("*/*")
+                    .setAction(Intent.ACTION_GET_CONTENT);
+
+            startActivityForResult(Intent.createChooser(intent, "Select a file"), 123);
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode==123 && resultCode==RESULT_OK) {
+            Uri selectedfile = data.getData(); //The uri with the location of the file
+
+            try {
+                BufferedReader in = new BufferedReader(new InputStreamReader(
+                        getContentResolver().openInputStream(selectedfile)));
+                String line;
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yy HH:mm:ss");
+                while((line=in.readLine())!= null){
+                    if (line.contains("Time,Description")){
+                        continue;
+                    }
+                    String tkns[] = line.split(",");
+                    if (tkns.length==2){
+                        ContentValues cv = new ContentValues();
+
+                        cv.put(PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN,
+                                tkns[0]);
+                        cv.put(PowerKeeperContract.TimekeeperEntry.DESCRIPTION_COLUMN, tkns[1]);
+
+                        PowerKeeperDao.getInstance(this).insertTimekeeper(cv);
+
+                        cv = new ContentValues();
+                        cv.put(PowerKeeperContract.DateEntry.DATE_COLUMN,
+                                Constants.SHORT_FORMAT.format(Constants.DB_LONG_FORMAT.parse(tkns[0])));
+                        PowerKeeperDao.getInstance(this).insertDatekeeper(cv);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    protected Dialog onCreateDialog(int id) {
+        Dialog dialog = null;
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        switch(id) {
+            case DIALOG_LOAD_FILE:
+                builder.setTitle("Choose your file");
+                if(mFileList == null) {
+                    Log.e(TAG, "Showing file picker before loading the file list");
+                    dialog = builder.create();
+                    return dialog;
+                }
+                builder.setItems(mFileList, new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int which) {
+                        mChosenFile = mFileList[which];
+                        //you can do stuff with the file here too
+                    }
+                });
+                break;
+        }
+        dialog = builder.show();
+        return dialog;
+    }
+    private void loadFileList() {
+        try {
+            mPath.mkdirs();
+        }
+        catch(SecurityException e) {
+            Log.e(TAG, "unable to write on the sd card " + e.toString());
+        }
+        if(mPath.exists()) {
+            FilenameFilter filter = new FilenameFilter() {
+
+                @Override
+                public boolean accept(File dir, String filename) {
+                    File sel = new File(dir, filename);
+                    return filename.contains(FTYPE) || sel.isDirectory();
+                }
+
+            };
+            mFileList = mPath.list(filter);
+        }
+        else {
+            mFileList= new String[0];
+        }
     }
 }
