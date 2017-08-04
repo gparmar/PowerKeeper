@@ -5,14 +5,14 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
-        android:name="in.tranquilsoft.in.gparmar.powerkeeper.PowerKeeperApplication"
+        android:name=".PowerKeeperApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name="in.tranquilsoft.in.gparmar.powerkeeper.HomeActivity">
+        <activity android:name=".HomeActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -20,7 +20,7 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name="in.tranquilsoft.in.gparmar.powerkeeper.PowerConnectionReceiver">
+        <receiver android:name=".PowerConnectionReceiver">
             <intent-filter>
                 <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
                 <action android:name="android.intent.action.ACTION_POWER_DISCONNECTED" />
@@ -28,20 +28,25 @@
         </receiver>
 
         <service
-            android:name="in.tranquilsoft.in.gparmar.powerkeeper.service.CreateReportService"
+            android:name=".service.CreateReportService"
             android:label="Create report service"
             android:permission="android.permission.BIND_JOB_SERVICE" />
-
-        <!--<activity-->
-            <!--android:name=".ScheduleJobActivity"-->
-            <!--android:parentActivityName=".MainActivity" />-->
-        <!--<activity-->
-            <!--android:name=".SettingsActivity"-->
-            <!--android:parentActivityName=".MainActivity" />-->
+        <service android:name=".service.SaveEventService" />
+        <!-- <activity -->
+        <!-- android:name=".ScheduleJobActivity" -->
+        <!-- android:parentActivityName=".MainActivity" /> -->
         <activity
-            android:name="in.tranquilsoft.in.gparmar.powerkeeper.data.AndroidDatabaseManager"
-            android:parentActivityName="in.tranquilsoft.in.gparmar.powerkeeper.HomeActivity" />
-
+            android:name=".SettingsActivity"
+            android:parentActivityName=".HomeActivity" />
+        <activity
+            android:name=".data.AndroidDatabaseManager"
+            android:parentActivityName=".HomeActivity"
+            />
+        <activity android:name=".PowerDetailsActivity"
+            android:parentActivityName=".HomeActivity">
+            <meta-data android:name="android.support.PARENT_ACTIVITY"
+                android:value=".HomeActivity"/>
+        </activity>
     </application>
 
 </manifest>

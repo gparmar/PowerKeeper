@@ -344,7 +344,8 @@ public class MainActivity extends AppCompatActivity {
         } else if (item.getItemId() == R.id.settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
-        } else if (item.getItemId() == R.id.delete_all) {
+        }
+        else if (item.getItemId() == R.id.delete_all) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Warning")
                     .setMessage("This will clear all the previous history.")

@@ -1,16 +1,23 @@
 package in.tranquilsoft.powerkeeper;
 
+import android.content.BroadcastReceiver;
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ListView;
+import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
@@ -39,11 +46,25 @@ import in.tranquilsoft.powerkeeper.util.Constants;
 public class HomeActivity extends AppCompatActivity {
     private static final String TAG = "HomeActivity";
     @BindView(R.id.list_view)
-    ListView listView;
+    RecyclerView recyclerView;
+    @BindView(R.id.adView)
+    AdView mAdView;
 
     private DateCursorAdapter adapter;
     private FirebaseAnalytics mFirebaseAnalytics;
-    private AdView mAdView;
+
+    private Cursor datesCursor;
+
+    BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals("DATA_CHANGED")){
+                Log.d(TAG, "in onReceive. Setting new cursor and notifying dataset changed.");
+                adapter.setCursor(PowerKeeperDao.getInstance(HomeActivity.this).getAllDates());
+                adapter.notifyDataSetChanged();
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,9 +72,19 @@ public class HomeActivity extends AppCompatActivity {
         setContentView(R.layout.activity_home);
 
         ButterKnife.bind(this);
-        adapter = new DateCursorAdapter(this, PowerKeeperDao.getInstance(this).getAllDates());
-        listView.setAdapter(adapter);
+        datesCursor = PowerKeeperDao.getInstance(this).getAllDates();
 
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+        recyclerView.setLayoutManager(layoutManager);
+        adapter = new DateCursorAdapter(this, datesCursor);
+        recyclerView.setAdapter(adapter);
+        recyclerView.setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View v) {
+
+            }
+        });
         // Obtain the FirebaseAnalytics instance.
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
@@ -64,36 +95,39 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu, menu);
-
+        if (!BuildConfig.DEBUG) {
+            menu.findItem(R.id.settings).setEnabled(false);
+            menu.findItem(R.id.database).setEnabled(false);
+        }
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.refresh) {
-//            refreshPage();
+            adapter.notifyDataSetChanged();
         } else if (item.getItemId() == R.id.settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
         } else if (item.getItemId() == R.id.delete_all) {
-//            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-//            builder.setTitle("Warning")
-//                    .setMessage("This will clear all the previous history.")
-//                    .setPositiveButton("Clear", new DialogInterface.OnClickListener() {
-//                        @Override
-//                        public void onClick(DialogInterface dialogInterface, int i) {
-//                            PowerKeeperDao.getInstance(MainActivity.this)
-//                                    .deleteAll();
-//                            mAdapter.setCursor(PowerKeeperDao.getInstance(MainActivity.this).queryAll());
-//                            mAdapter.notifyDataSetChanged();
-//                        }
-//                    }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-//                @Override
-//                public void onClick(DialogInterface dialogInterface, int i) {
-//                    dialogInterface.dismiss();
-//                }
-//            });
-//            builder.create().show();
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Warning")
+                    .setMessage("This will clear all the previous history.")
+                    .setPositiveButton("Clear", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            PowerKeeperDao.getInstance(HomeActivity.this)
+                                    .deleteAll();
+                            adapter.setCursor(PowerKeeperDao.getInstance(HomeActivity.this).getAllDates());
+                            adapter.notifyDataSetChanged();
+                        }
+                    }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    dialogInterface.dismiss();
+                }
+            });
+            builder.create().show();
         } else if (item.getItemId() == R.id.database) {
             Intent intent = new Intent(this, AndroidDatabaseManager.class);
             startActivity(intent);
@@ -182,7 +216,7 @@ public class HomeActivity extends AppCompatActivity {
 
                         PowerKeeperDao.getInstance(this).insertTimekeeper(cv);
 
-                        String date = Constants.SHORT_FORMAT.format(Constants.DB_LONG_FORMAT.parse(tkns[0]));
+                        String date = Constants.DB_SHORT_FORMAT.format(Constants.DB_LONG_FORMAT.parse(tkns[0]));
                         if (!dates.contains(date)) {
                             cv = new ContentValues();
                             dates.add(date);
@@ -192,6 +226,8 @@ public class HomeActivity extends AppCompatActivity {
                         }
                     }
                 }
+                adapter.setCursor(PowerKeeperDao.getInstance(HomeActivity.this).getAllDates());
+                adapter.notifyDataSetChanged();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -201,8 +237,14 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        mAdView = (AdView) findViewById(R.id.adView);
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
+        registerReceiver(receiver, new IntentFilter("DATA_CHANGED"));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(receiver);
     }
 }

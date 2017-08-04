@@ -5,50 +5,55 @@
     android:id="@+id/events_container"
     android:layout_width="match_parent"
     android:layout_height="50dp"
+    android:layout_marginBottom="2dp"
     android:background="?attr/selectableItemBackground">
-    <TextView android:id="@+id/date_val"
+
+    <LinearLayout android:id="@+id/back_ll"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/holo_green_dark"
+        android:gravity="bottom">
+
+
+    </LinearLayout>
+    <TextView
+        android:id="@+id/date_val"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="25dp"
+        android:background="@android:color/white"
         android:padding="2dp"
-        tools:text="24-07-2017"
+        android:textColor="@android:color/black"
+        android:textStyle="bold"
+        android:translationZ="10dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:textColor="@android:color/black"
-        android:background="@android:color/white"
-        android:textStyle="bold"
-        android:translationZ="10dp" android:layout_marginLeft="25dp"
-        />
-    <TextView android:id="@+id/total_downtime_lbl"
+        app:layout_constraintVertical_bias="1"
+        tools:text="24-07-2017" />
+
+
+    <TextView
+        android:id="@+id/total_downtime"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        tools:text="Downtime:"
+        android:layout_marginLeft="5dp"
+        android:background="@android:color/white"
+        android:padding="2dp"
+        android:textColor="@android:color/black"
+        android:textStyle="bold"
+        android:translationZ="10dp"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toRightOf="@id/date_val"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginLeft="20dp"
-        android:textColor="@android:color/black"
-        android:textStyle="bold"
-        android:translationZ="10dp"/>
-    <TextView android:id="@+id/total_downtime"
+        app:layout_constraintVertical_bias="1"
+        tools:text="5.5 hours" />
+    <ImageView android:id="@+id/right_arrow"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        tools:text="5.5 hours"
-        android:padding="2dp"
-        app:layout_constraintLeft_toRightOf="@id/total_downtime_lbl"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginLeft="5dp"
-        android:textColor="@android:color/black"
-        android:background="@android:color/white"
-        android:textStyle="bold"
-        android:translationZ="10dp"/>
-    <ImageView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_marginRight="2dp"
         android:src="@drawable/right_arrow"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:layout_marginRight="2dp"/>
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 </android.support.constraint.ConstraintLayout>

@@ -36,6 +36,7 @@ public class PowerKeeperDao {
         dbHelper.getWritableDatabase().insert(PowerKeeperContract.TimekeeperEntry.TABLE_NAME,
                 null, cv);
     }
+
     public void insertDatekeeper(ContentValues cv) {
         dbHelper.getWritableDatabase().insert(PowerKeeperContract.DateEntry.TABLE_NAME,
                 null, cv);
@@ -48,7 +49,7 @@ public class PowerKeeperDao {
 
     public Cursor queryForFirstDataDate() {
         return dbHelper.getReadableDatabase().query(PowerKeeperContract.TimekeeperEntry.TABLE_NAME,
-                null, null, null, null, null, PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN+" ASC LIMIT 1");
+                null, null, null, null, null, PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN + " ASC LIMIT 1");
     }
 
     public Cursor queryForDay(Date date) {
@@ -56,30 +57,33 @@ public class PowerKeeperDao {
         String datetime = sdf.format(CommonUtils.startOfDay(date));
         return dbHelper.getReadableDatabase()
                 .query(PowerKeeperContract.TimekeeperEntry.TABLE_NAME
-                        , null, PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN+">?"
+                        , null, PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN + ">?"
                         , new String[]{datetime}, null, null,
                         PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN);
     }
+
     public Cursor queryForToday() {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String datetime = sdf.format(CommonUtils.startOfToday());
         return dbHelper.getReadableDatabase()
                 .query(PowerKeeperContract.TimekeeperEntry.TABLE_NAME
-                        , null, PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN+">?"
+                        , null, PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN + ">?"
                         , new String[]{datetime}, null, null,
                         PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN);
     }
+
     public Cursor queryForOneBeforeDay(Date date) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String datetime = sdf.format(CommonUtils.startOfDay(date));
         return dbHelper.getReadableDatabase()
                 .query(PowerKeeperContract.TimekeeperEntry.TABLE_NAME
-                        , null, PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN+"<?"
+                        , null, PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN + "<?"
                         , new String[]{datetime}, null, null,
                         "1");
     }
 
     public void deleteAll() {
+        dbHelper.getWritableDatabase().delete(PowerKeeperContract.DateEntry.TABLE_NAME, null, null);
         dbHelper.getWritableDatabase().delete(PowerKeeperContract.TimekeeperEntry.TABLE_NAME, null, null);
     }
 
@@ -88,22 +92,26 @@ public class PowerKeeperDao {
                 , PowerKeeperContract.TimekeeperEntry._ID + "=?", new String[]{id + ""});
     }
 
-    public Cursor getAllDates(){
+    public Cursor getAllDates() {
         return dbHelper.getReadableDatabase().query(PowerKeeperContract.DateEntry.TABLE_NAME,
-                null,null,null,null,null,null);
+                null, null, null, null, null, PowerKeeperContract.DateEntry.DATE_COLUMN + " DESC");
     }
 
-    public Cursor getValuesForDate(String date) {
-        try {
-            String dbDateFormat = Constants.DB_SHORT_FORMAT.format(Constants.SHORT_FORMAT.parse(date));
-            return dbHelper.getReadableDatabase().query(PowerKeeperContract.TimekeeperEntry.TABLE_NAME,
-                    null, PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN+" >=? and "+
-                            PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN+" <=? ",
-                    new String[]{dbDateFormat+" 00:00:00", dbDateFormat+" 23:59:59"},null,null,
-                    PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN+" asc");
-        } catch (ParseException e) {
-            e.printStackTrace();
+    public Cursor getValuesForDate(String date, boolean sortOrderAsc) {
+        String sortOrder = " asc";
+        if (!sortOrderAsc){
+            sortOrder = " desc";
         }
-        return null;
+        return dbHelper.getReadableDatabase().query(PowerKeeperContract.TimekeeperEntry.TABLE_NAME,
+                null, PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN + " >=? and " +
+                        PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN + " <=? ",
+                new String[]{date + " 00:00:00", date + " 23:59:59"}, null, null,
+                PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN + sortOrder);
+
+    }
+
+    public Cursor getDatesTableRowByDate(String date) {
+        return dbHelper.getReadableDatabase().query(PowerKeeperContract.DateEntry.TABLE_NAME,
+                null, PowerKeeperContract.DateEntry.DATE_COLUMN + "=?", new String[]{date}, null, null, null);
     }
 }

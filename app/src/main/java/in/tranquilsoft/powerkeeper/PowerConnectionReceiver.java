@@ -6,9 +6,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.BatteryManager;
+import android.util.Log;
 
-import in.tranquilsoft.powerkeeper.data.PowerKeeperContract.*;
-import in.tranquilsoft.powerkeeper.data.PowerKeeperDao;
+import com.google.firebase.crash.FirebaseCrash;
+
+import in.tranquilsoft.powerkeeper.model.Timekeeper;
+import in.tranquilsoft.powerkeeper.service.SaveEventService;
 import in.tranquilsoft.powerkeeper.util.Constants;
 
 /**
@@ -16,43 +19,33 @@ import in.tranquilsoft.powerkeeper.util.Constants;
  */
 
 public class PowerConnectionReceiver extends BroadcastReceiver {
+    private static String TAG = "PowerConnectionReceiver";
     @Override
     public void onReceive(Context context, Intent intent) {
+        Log.v(TAG, "Came into onReceive");
         try {
             IntentFilter ifilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
             Intent batteryStatus = context.registerReceiver(null, ifilter);
-//            int status = batteryStatus.getIntExtra(BatteryManager.EXTRA_STATUS, -1);
-//            boolean isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
-//                    status == BatteryManager.BATTERY_STATUS_FULL;
-
             int chargePlug = batteryStatus.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
             boolean usbCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_USB;
             boolean acCharge = chargePlug == BatteryManager.BATTERY_PLUGGED_AC;
+            Intent saveEventServiceIntent = new Intent(context, SaveEventService.class);
+            saveEventServiceIntent.putExtra(Constants.EVENT_TIME, System.currentTimeMillis());
             if (chargePlug == BatteryManager.BATTERY_PLUGGED_AC) {
-                ContentValues cv = new ContentValues();
-                cv.put(TimekeeperEntry.DESCRIPTION_COLUMN, Constants.START_MESSAGE);
-//                Timestamp ts = new Timestamp(System.currentTimeMillis());
-//                cv.put(TimekeeperEntry.TIMESTAMP_COLUMN, String);
-                PowerKeeperDao.getInstance(context).insertTimekeeper(cv);
+                saveEventServiceIntent.putExtra(Constants.EVENT_TYPE, Constants.EVENT_TYPE_STARTED_CHARGING);
             } else if (chargePlug == 0) {
-                ContentValues cv = new ContentValues();
-                cv.put(TimekeeperEntry.DESCRIPTION_COLUMN, Constants.STOP_MESSAGE);
-                PowerKeeperDao.getInstance(context).insertTimekeeper(cv);
+                saveEventServiceIntent.putExtra(Constants.EVENT_TYPE, Constants.EVENT_TYPE_STOPPED_CHARGING);
             }
-
-            Intent dataChangedBroadcast = new Intent("DATA_CHANGED");
-            context.sendBroadcast(dataChangedBroadcast);
-//            Bundle extas = intent.getExtras();
-//            if (extas != null) {
-//                Set<String> keys = extas.keySet();
-//                for (String key : keys) {
-//                    Log.d("PowerConnecnReceiverrrr", "key:" + key + ", value:" + extas.get(key));
-//                }
-//            }
+            Log.d(TAG, "Starting service SaveEventService with "+saveEventServiceIntent.getStringExtra(Constants.EVENT_TYPE));
+            context.startService(saveEventServiceIntent);
         }catch (Exception e) {
             e.printStackTrace();
+            FirebaseCrash.logcat(Log.ERROR, TAG, "Excn caught while performing onReceive");
+            FirebaseCrash.report(e);
         } catch (Error er) {
             er.printStackTrace();
+            FirebaseCrash.logcat(Log.ERROR, TAG, "Error caught while performing onReceive");
+            FirebaseCrash.report(er);
         }
     }
 }

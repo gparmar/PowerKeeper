@@ -1,5 +1,8 @@
 <resources>
     <string name="app_name">Power Keeper</string>
     <string name="total_downtime">Total Downtime: %1$s hours</string>
-    <string name="banner_ad_unit_id">ca-app-pub-3940256099942544/6300978111</string>
+    <!--test ads<string name="banner_ad_unit_id">ca-app-pub-3940256099942544/6300978111</string>-->
+    <string name="admob_app_id">ca-app-pub-2044443480067509~4258231210</string>
+    <string name="banner_ad_unit_id">ca-app-pub-2044443480067509/8033824693</string>
+    <string name="details_title">Details</string>
 </resources>
