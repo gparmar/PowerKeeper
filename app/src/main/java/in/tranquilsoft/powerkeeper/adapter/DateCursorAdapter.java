@@ -15,6 +15,8 @@ import android.view.ViewGroup;
 import android.widget.CursorAdapter;
 import android.widget.TextView;
 
+import com.google.firebase.analytics.FirebaseAnalytics;
+
 import java.sql.Timestamp;
 import java.text.DecimalFormat;
 import java.text.ParseException;
@@ -165,7 +167,7 @@ public class DateCursorAdapter extends RecyclerView.Adapter<DateCursorAdapter.My
 
     @Override
     public void onBindViewHolder(MyViewHolder holder, int position) {
-        ConstraintLayout constraintLayout = (ConstraintLayout) holder.itemView;
+        final ConstraintLayout constraintLayout = (ConstraintLayout) holder.itemView;
 
         cursor.moveToPosition(position);
         final String date = cursor.getString(cursor.getColumnIndex(PowerKeeperContract.DateEntry.DATE_COLUMN));
@@ -202,6 +204,7 @@ public class DateCursorAdapter extends RecyclerView.Adapter<DateCursorAdapter.My
                 Intent intent = new Intent(context, PowerDetailsActivity.class);
                 intent.putExtra(Constants.DETAIL_SELECTED_DATE, date);
                 context.startActivity(intent);
+                FirebaseAnalytics.getInstance(context).logEvent("Detail_Opened",null);
             }
         });
     }

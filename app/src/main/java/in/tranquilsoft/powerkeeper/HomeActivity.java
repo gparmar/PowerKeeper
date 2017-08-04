@@ -96,8 +96,8 @@ public class HomeActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu, menu);
         if (!BuildConfig.DEBUG) {
-            menu.findItem(R.id.settings).setEnabled(false);
-            menu.findItem(R.id.database).setEnabled(false);
+            menu.findItem(R.id.settings).setVisible(false);
+            menu.findItem(R.id.database).setVisible(false);
         }
         return true;
     }

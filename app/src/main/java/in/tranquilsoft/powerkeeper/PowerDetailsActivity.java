@@ -1,5 +1,9 @@
 package in.tranquilsoft.powerkeeper;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -26,6 +30,17 @@ public class PowerDetailsActivity extends AppCompatActivity {
 
     private PowerDetailAdapter adapter;
     private String date;
+
+    BroadcastReceiver receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (intent.getAction().equals("DATA_CHANGED")){
+                Log.d(TAG, "in onReceive. Setting new cursor and notifying dataset changed.");
+                adapter.setCursor(PowerKeeperDao.getInstance(PowerDetailsActivity.this).getAllDates());
+                adapter.notifyDataSetChanged();
+            }
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,5 +78,12 @@ public class PowerDetailsActivity extends AppCompatActivity {
         super.onResume();
         AdRequest adRequest = new AdRequest.Builder().build();
         adView.loadAd(adRequest);
+        registerReceiver(receiver, new IntentFilter("DATA_CHANGED"));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(receiver);
     }
 }
