@@ -4,7 +4,8 @@
     android:orientation="horizontal" android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:paddingLeft="10dp"
-    android:paddingRight="10dp">
+    android:paddingRight="10dp"
+    android:background="@drawable/bottom_borders">
     <TextView
         android:id="@+id/time_stamp"
         android:layout_width="match_parent"

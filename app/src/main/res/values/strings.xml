@@ -5,4 +5,17 @@
     <string name="admob_app_id">ca-app-pub-2044443480067509~4258231210</string>
     <string name="banner_ad_unit_id">ca-app-pub-2044443480067509/8033824693</string>
     <string name="details_title">Details</string>
+    <string name="exported_title">Exported</string>
+    <string name="exported_msg">Your data has been exported to the file %1$s</string>
+    <string name="not_exported_msg">Your data couldn\'t be exported due to some problem.</string>
+    <string name="swipe_off_msg">Do you know that you can delete an event with a swipe off gesture.\n You could do it for Start/Stop events that happened inadvertently.</string>
+    <string name="ok_lbl">OK</string>
+    <string name="no_data_yet">There is no data yet.</string>
+    <string name="export_current_month_as_picture">Export Current Month as Picture</string>
+    <string name="import_data">Import Data</string>
+    <string name="export_data">Export Data</string>
+    <string name="query_database">Query Database</string>
+    <string name="clear_all_data">Clear all Data</string>
+    <string name="refresh">Refresh</string>
+    <string name="settings">Settings</string>
 </resources>

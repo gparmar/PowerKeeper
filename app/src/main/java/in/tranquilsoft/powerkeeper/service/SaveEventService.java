@@ -11,6 +11,7 @@ import java.util.Date;
 
 import in.tranquilsoft.powerkeeper.data.PowerKeeperContract;
 import in.tranquilsoft.powerkeeper.data.PowerKeeperDao;
+import in.tranquilsoft.powerkeeper.util.CommonUtils;
 import in.tranquilsoft.powerkeeper.util.Constants;
 
 /**
@@ -40,7 +41,13 @@ public class SaveEventService extends IntentService {
         } catch (Exception e) {
             date = new Date();
         }
+        boolean firstEventRecorded =
+                Boolean.parseBoolean(CommonUtils.getSharedPref(this, Constants.FIRST_EVENT_RECORDED, "false"));
         if (Constants.EVENT_TYPE_STARTED_CHARGING.equals(eventType)) {
+            if (!firstEventRecorded) {
+                CommonUtils.putSharedPref(this, Constants.FIRST_EVENT_RECORDED, "true");
+                return;
+            }
             cv.put(PowerKeeperContract.TimekeeperEntry.DESCRIPTION_COLUMN,
                     Constants.START_MESSAGE);
 
@@ -48,6 +55,9 @@ public class SaveEventService extends IntentService {
             cv.put(PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN, Constants.DB_LONG_FORMAT.format(date));
             PowerKeeperDao.getInstance(this).insertTimekeeper(cv);
         } else if (Constants.EVENT_TYPE_STOPPED_CHARGING.equals(eventType)) {
+            if (!firstEventRecorded) {
+                CommonUtils.putSharedPref(this, Constants.FIRST_EVENT_RECORDED, "true");
+            }
             cv.put(PowerKeeperContract.TimekeeperEntry.DESCRIPTION_COLUMN,
                     Constants.STOP_MESSAGE);
 

@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import in.tranquilsoft.powerkeeper.HomeActivity;
 import in.tranquilsoft.powerkeeper.PowerDetailsActivity;
 import in.tranquilsoft.powerkeeper.R;
 import in.tranquilsoft.powerkeeper.data.PowerKeeperContract;
@@ -43,6 +44,7 @@ public class DateCursorAdapter extends RecyclerView.Adapter<DateCursorAdapter.My
     private Context context;
     private double redDiff;
     private Cursor cursor;
+    private int selectedPosition = -1;
 
     public DateCursorAdapter(Context context, Cursor c) {
         this.cursor = c;
@@ -166,7 +168,7 @@ public class DateCursorAdapter extends RecyclerView.Adapter<DateCursorAdapter.My
     }
 
     @Override
-    public void onBindViewHolder(MyViewHolder holder, int position) {
+    public void onBindViewHolder(MyViewHolder holder, final int position) {
         final ConstraintLayout constraintLayout = (ConstraintLayout) holder.itemView;
 
         cursor.moveToPosition(position);
@@ -196,7 +198,11 @@ public class DateCursorAdapter extends RecyclerView.Adapter<DateCursorAdapter.My
 
             ((ConstraintLayout) holder.itemView).addView(xetching, lp);
         }
-
+        if (selectedPosition > -1 && selectedPosition == position) {
+            holder.itemView.setPressed(true);
+        } else {
+            holder.itemView.setPressed(false);
+        }
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -205,6 +211,8 @@ public class DateCursorAdapter extends RecyclerView.Adapter<DateCursorAdapter.My
                 intent.putExtra(Constants.DETAIL_SELECTED_DATE, date);
                 context.startActivity(intent);
                 FirebaseAnalytics.getInstance(context).logEvent("Detail_Opened",null);
+                selectedPosition = position;
+                ((HomeActivity)context).setSelectedPosition(position);
             }
         });
     }
@@ -215,6 +223,10 @@ public class DateCursorAdapter extends RecyclerView.Adapter<DateCursorAdapter.My
             return cursor.getCount();
         }
         return 0;
+    }
+
+    public void setSelectedPosition(int selectedPosition) {
+        this.selectedPosition = selectedPosition;
     }
 
     public void setCursor(Cursor cursor) {

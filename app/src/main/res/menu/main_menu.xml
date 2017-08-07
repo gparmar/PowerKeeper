@@ -3,14 +3,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
         android:id="@+id/settings"
-        android:title="Settings"
+        android:title="@string/settings"
         android:icon="@drawable/ic_action_settings"
         app:showAsAction="always"
         android:orderInCategory="8"
         />
     <item
         android:id="@+id/refresh"
-        android:title="Refresh"
+        android:title="@string/refresh"
         android:icon="@drawable/ic_action_autorenew"
         app:showAsAction="always"
         android:orderInCategory="10"
@@ -18,27 +18,33 @@
 
     <item
         android:id="@+id/delete_all"
-        android:title="Clear all Data"
+        android:title="@string/clear_all_data"
         android:icon="@android:drawable/ic_menu_delete"
         app:showAsAction="never"
         android:orderInCategory="19"
         />
     <item
         android:id="@+id/database"
-        android:title="Query Database"
+        android:title="@string/query_database"
         android:icon="@drawable/ic_database"
         app:showAsAction="never"
         android:orderInCategory="25"
         />
     <item
         android:id="@+id/export_data"
-        android:title="Export Data"
+        android:title="@string/export_data"
         app:showAsAction="never"
         android:orderInCategory="25"
         />
     <item
         android:id="@+id/import_data"
-        android:title="Import Data"
+        android:title="@string/import_data"
+        app:showAsAction="never"
+        android:orderInCategory="25"
+        />
+    <item
+        android:id="@+id/export_as_picture"
+        android:title="@string/export_current_month_as_picture"
         app:showAsAction="never"
         android:orderInCategory="25"
         />

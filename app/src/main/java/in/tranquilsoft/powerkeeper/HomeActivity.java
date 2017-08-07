@@ -6,9 +6,14 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Environment;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -18,6 +23,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
@@ -41,6 +49,7 @@ import in.tranquilsoft.powerkeeper.adapter.DateCursorAdapter;
 import in.tranquilsoft.powerkeeper.data.AndroidDatabaseManager;
 import in.tranquilsoft.powerkeeper.data.PowerKeeperContract;
 import in.tranquilsoft.powerkeeper.data.PowerKeeperDao;
+import in.tranquilsoft.powerkeeper.util.CommonUtils;
 import in.tranquilsoft.powerkeeper.util.Constants;
 
 public class HomeActivity extends AppCompatActivity {
@@ -49,9 +58,14 @@ public class HomeActivity extends AppCompatActivity {
     RecyclerView recyclerView;
     @BindView(R.id.adView)
     AdView mAdView;
+    @BindView(R.id.no_data)
+    TextView noData;
 
     private DateCursorAdapter adapter;
     private FirebaseAnalytics mFirebaseAnalytics;
+    private LinearLayoutManager layoutManager;
+    private int verticalScrollPosition;
+    private int selectedPosition;
 
     private Cursor datesCursor;
 
@@ -60,8 +74,7 @@ public class HomeActivity extends AppCompatActivity {
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals("DATA_CHANGED")){
                 Log.d(TAG, "in onReceive. Setting new cursor and notifying dataset changed.");
-                adapter.setCursor(PowerKeeperDao.getInstance(HomeActivity.this).getAllDates());
-                adapter.notifyDataSetChanged();
+                refreshCursor();
             }
         }
     };
@@ -73,23 +86,26 @@ public class HomeActivity extends AppCompatActivity {
 
         ButterKnife.bind(this);
         datesCursor = PowerKeeperDao.getInstance(this).getAllDates();
-
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
+        if (datesCursor ==null || datesCursor.getCount() == 0) {
+            noData.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+        } else {
+            noData.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
+        }
+        layoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
         recyclerView.setLayoutManager(layoutManager);
         adapter = new DateCursorAdapter(this, datesCursor);
         recyclerView.setAdapter(adapter);
-        recyclerView.setOnClickListener(new View.OnClickListener(){
 
-            @Override
-            public void onClick(View v) {
-
-            }
-        });
         // Obtain the FirebaseAnalytics instance.
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
 
         mFirebaseAnalytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, null);
 
+        if (BuildConfig.DEBUG) {
+            new AdRequest.Builder().addTestDevice("D4CA5E10AAA16CDA5581DE7AF8AB3946");
+        }
     }
 
     @Override
@@ -98,6 +114,7 @@ public class HomeActivity extends AppCompatActivity {
         if (!BuildConfig.DEBUG) {
             menu.findItem(R.id.settings).setVisible(false);
             menu.findItem(R.id.database).setVisible(false);
+            menu.findItem(R.id.export_as_picture).setVisible(false);
         }
         return true;
     }
@@ -105,7 +122,7 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.refresh) {
-            adapter.notifyDataSetChanged();
+            refreshCursor();
         } else if (item.getItemId() == R.id.settings) {
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
@@ -118,8 +135,7 @@ public class HomeActivity extends AppCompatActivity {
                         public void onClick(DialogInterface dialogInterface, int i) {
                             PowerKeeperDao.getInstance(HomeActivity.this)
                                     .deleteAll();
-                            adapter.setCursor(PowerKeeperDao.getInstance(HomeActivity.this).getAllDates());
-                            adapter.notifyDataSetChanged();
+                            refreshCursor();
                         }
                     }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                 @Override
@@ -133,52 +149,26 @@ public class HomeActivity extends AppCompatActivity {
             startActivity(intent);
         } else if (item.getItemId() == R.id.export_data) {
 //            progressBar.setVisibility(View.VISIBLE);
-            Cursor cursor = PowerKeeperDao.getInstance(this).queryAll();
-            if (cursor != null) {
-                File exportDir = new File(Environment.getExternalStorageDirectory() + File.separator + ".PowerKeeper");
-                long freeBytesInternal = new File(getApplicationContext().getFilesDir().getAbsoluteFile().toString()).getFreeSpace();
-                long megAvailable = freeBytesInternal / 1048576;
-                boolean memoryErr = false;
-                if (megAvailable < 0.1) {
-                    Toast.makeText(this, "There is no storage. Storage present" + megAvailable,
-                            Toast.LENGTH_LONG).show();
-                    memoryErr = true;
-                } else {
-                    String exportDirStr = exportDir.toString();// to show in dialogbox
-                    Log.v(TAG, "exportDir path::" + exportDir);
-                    if (!exportDir.exists()) {
-                        exportDir.mkdirs();
-                    }
-                    SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy_HH_mm_ss");
-                    File exportFile = new File(exportDir, "powerkeeper" +
-                            (sdf.format(new Date())) + ".csv");
-                    FileWriter out = null;
-                    try {
-                        out = new FileWriter(exportFile);
-                        out.write("Time,Description\n");
-                        while (cursor.moveToNext()) {
-                            String desc = cursor.getString(cursor.getColumnIndex(PowerKeeperContract.TimekeeperEntry.DESCRIPTION_COLUMN));
-                            String ts = cursor.getString(cursor.getColumnIndex(PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN));
-                            Timestamp timestamp = Timestamp.valueOf(ts);
+            //Cehck write permissions
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                //Ask for WRITE_EXTERNAL_STORAGE permission from the user, if not present
+                // Here, thisActivity is the current activity
+                if (ContextCompat.checkSelfPermission(this,
+                        android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        != PackageManager.PERMISSION_GRANTED) {
 
-                            out.write(Constants.LONG_FORMAT.format(new Date(timestamp.getTime())) + "," + desc + "\n");
-                        }
-                        out.flush();
+                    // No explanation needed, we can request the permission.
+                    ActivityCompat.requestPermissions(this,
+                            new String[]{android.Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                            Constants.WRITE_EXTERNAL_STORAGE_REQ_CODE);
 
-                    } catch (IOException e) {
-                        Log.e(TAG, "", e);
-                    } finally {
-                        if (out != null) {
-                            try {
-                                out.close();
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        }
-                    }
-
+                    // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+                    // app-defined int constant. The callback method gets the
+                    // result of the request.
+                    return true;
                 }
             }
+            CommonUtils.exportData(this);
 //            progressBar.setVisibility(View.GONE);
         } else if (item.getItemId() == R.id.import_data) {
             Intent intent = new Intent()
@@ -186,8 +176,42 @@ public class HomeActivity extends AppCompatActivity {
                     .setAction(Intent.ACTION_GET_CONTENT);
 
             startActivityForResult(Intent.createChooser(intent, "Select a file"), 123);
+        } else if (item.getItemId() == R.id.export_as_picture) {
+            LinearLayout linearLayout = new LinearLayout(this);
+            linearLayout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT));
+            View view = recyclerView.getChildAt(0);
+
+            Log.d(TAG, "date:"+((TextView)view.findViewById(R.id.date_val)).getText());
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        Log.d(TAG, "Granted permission to write to local folders");
+        if (requestCode == Constants.WRITE_EXTERNAL_STORAGE_REQ_CODE) {
+            String filepath = CommonUtils.exportData(this);
+            if (filepath != null) {
+                new AlertDialog.Builder(this).setTitle(R.string.exported_title)
+                        .setMessage(getString(R.string.exported_msg, filepath))
+                        .setPositiveButton(R.string.ok_lbl, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        }).show();
+            } else {
+                new AlertDialog.Builder(this).setTitle(R.string.exported_title)
+                        .setMessage(R.string.not_exported_msg)
+                        .setPositiveButton(R.string.ok_lbl, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        }).show();
+            }
+        }
     }
 
     @Override
@@ -226,8 +250,7 @@ public class HomeActivity extends AppCompatActivity {
                         }
                     }
                 }
-                adapter.setCursor(PowerKeeperDao.getInstance(HomeActivity.this).getAllDates());
-                adapter.notifyDataSetChanged();
+                refreshCursor();
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -237,14 +260,47 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        refreshCursor();
         AdRequest adRequest = new AdRequest.Builder().build();
         mAdView.loadAd(adRequest);
         registerReceiver(receiver, new IntentFilter("DATA_CHANGED"));
+        verticalScrollPosition =
+                Integer.parseInt(CommonUtils.getSharedPref(this, "verticalScrollPosition", "0"));
+
+        if (verticalScrollPosition > 0) {
+            recyclerView.scrollToPosition(verticalScrollPosition);
+        }
+        selectedPosition =
+                Integer.parseInt(CommonUtils.getSharedPref(this, "selectedPosition", "0"));
+        if (selectedPosition > 0) {
+            adapter.setSelectedPosition(selectedPosition);
+            //recyclerView.scrollToPosition(selectedPosition);
+            //recyclerView.getChildAt(0).setSelected(true);
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         unregisterReceiver(receiver);
+        CommonUtils.putSharedPref(this, "verticalScrollPosition", layoutManager.findFirstVisibleItemPosition()+"");
+        CommonUtils.putSharedPref(this, "selectedPosition", selectedPosition+"");
+    }
+
+    private void refreshCursor(){
+        Cursor datesCursor = PowerKeeperDao.getInstance(HomeActivity.this).getAllDates();
+        if (datesCursor ==null || datesCursor.getCount() == 0) {
+            noData.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+        } else {
+            noData.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
+        }
+        adapter.setCursor(datesCursor);
+        adapter.notifyDataSetChanged();
+    }
+
+    public void setSelectedPosition(int position) {
+        selectedPosition = position;
     }
 }

@@ -15,10 +15,54 @@
       },
       "oauth_client": [
         {
-          "client_id": "232507461264-c2u3e4iu73per54jng3k2i7tvgf8vd7q.apps.googleusercontent.com",
+          "client_id": "232507461264-mgffobv6dv9tqp40t6mu02hg2ooj8ts4.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "in.tranquilsoft.powerkeeper",
+            "certificate_hash": "fae081c4742067ba0d054f9f784931b8c550516f"
+          }
+        },
+        {
+          "client_id": "232507461264-t83802cv3b5phkjv9ac2bvl63nsq82u9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBCMTu2AkHg82OeerWL7fAH_QuffXEp4lE"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 1
+        },
+        "appinvite_service": {
+          "status": 2,
+          "other_platform_oauth_client": [
+            {
+              "client_id": "232507461264-t83802cv3b5phkjv9ac2bvl63nsq82u9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        },
+        "ads_service": {
+          "status": 2
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:232507461264:android:84418a5767a535d9",
+        "android_client_info": {
+          "package_name": "in.tranquilsoft.powerkeeper.debug"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "232507461264-dv5f31rmkgnp7412360biqdiiumuqmu5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "in.tranquilsoft.powerkeeper.debug",
             "certificate_hash": "5de34340aba8f8f3f8c8c1f8754f7b2cef292f0d"
           }
         },

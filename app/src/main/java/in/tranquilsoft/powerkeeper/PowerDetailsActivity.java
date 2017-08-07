@@ -2,8 +2,10 @@ package in.tranquilsoft.powerkeeper;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -18,6 +20,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import in.tranquilsoft.powerkeeper.adapter.PowerDetailAdapter;
 import in.tranquilsoft.powerkeeper.data.PowerKeeperDao;
+import in.tranquilsoft.powerkeeper.util.CommonUtils;
 import in.tranquilsoft.powerkeeper.util.Constants;
 
 public class PowerDetailsActivity extends AppCompatActivity {
@@ -34,9 +37,9 @@ public class PowerDetailsActivity extends AppCompatActivity {
     BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals("DATA_CHANGED")){
+            if (intent.getAction().equals("DATA_CHANGED")) {
                 Log.d(TAG, "in onReceive. Setting new cursor and notifying dataset changed.");
-                adapter.setCursor(PowerKeeperDao.getInstance(PowerDetailsActivity.this).getAllDates());
+                adapter.setCursor(PowerKeeperDao.getInstance(PowerDetailsActivity.this).getValuesForDate(date, false));
                 adapter.notifyDataSetChanged();
             }
         }
@@ -71,6 +74,21 @@ public class PowerDetailsActivity extends AppCompatActivity {
 
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(simpleItemTouchCallback);
         itemTouchHelper.attachToRecyclerView(recyclerView);
+
+        boolean swipeAlertShown = Boolean.parseBoolean(CommonUtils.getSharedPref(this,
+                Constants.SWIPE_ALERT_SHOWN, "false"));
+        if (!swipeAlertShown) {
+            new AlertDialog.Builder(this)
+                    .setMessage(R.string.swipe_off_msg)
+                    .setPositiveButton(R.string.ok_lbl, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            CommonUtils.putSharedPref(PowerDetailsActivity.this,
+                                    Constants.SWIPE_ALERT_SHOWN, "true");
+                            dialog.dismiss();
+                        }
+                    }).show();
+        }
     }
 
     @Override
