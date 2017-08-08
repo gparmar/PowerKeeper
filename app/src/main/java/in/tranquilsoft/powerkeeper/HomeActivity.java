@@ -187,12 +187,13 @@ public class HomeActivity extends AppCompatActivity {
             progressBar.setVisibility(View.VISIBLE);
             new AsyncTask<Void, Void, Void>() {
                 private String filename;
+
                 @Override
                 protected Void doInBackground(Void... params) {
                     try {
                         filename = CommonUtils.exportData(HomeActivity.this);
-                    } catch (Exception e){
-                        Log.e(TAG,"",e);
+                    } catch (Exception e) {
+                        Log.e(TAG, "", e);
                     }
                     return null;
                 }
@@ -248,26 +249,9 @@ public class HomeActivity extends AppCompatActivity {
                 }
             }
 
-            progressBarMsg.setText(R.string.export_picture_progress_msg);
-            progressBar.setVisibility(View.VISIBLE);
-            new AsyncTask<Void, Void, Void>() {
-                @Override
-                protected Void doInBackground(Void... params) {
-                    beginExportingAsPicture();
-                    return null;
-                }
 
-                @Override
-                protected void onPostExecute(Void aVoid) {
-                    super.onPostExecute(aVoid);
-                    progressBar.setVisibility(View.GONE);
-                    new AlertDialog.Builder(HomeActivity.this)
-                            .setMessage(getString(R.string.pic_created, "<InternalStorage of your mobile>/" + Constants.EXPORT_FOLDER + "/" +
-                                    exportAsPictureFilename))
-                            .setPositiveButton(R.string.ok_lbl, null)
-                            .show();
-                }
-            }.execute();
+            beginExportingAsPicture();
+
 
         }
         return super.onOptionsItemSelected(item);
@@ -281,12 +265,13 @@ public class HomeActivity extends AppCompatActivity {
             progressBar.setVisibility(View.VISIBLE);
             new AsyncTask<Void, Void, Void>() {
                 private String filename;
+
                 @Override
                 protected Void doInBackground(Void... params) {
                     try {
                         filename = CommonUtils.exportData(HomeActivity.this);
-                    } catch (Exception e){
-                        Log.e(TAG,"",e);
+                    } catch (Exception e) {
+                        Log.e(TAG, "", e);
                     }
                     return null;
                 }
@@ -316,27 +301,9 @@ public class HomeActivity extends AppCompatActivity {
             }.execute();
 
         } else if (requestCode == Constants.EXPORT_AS_PICTURE_REQ_CODE) {
-            progressBarMsg.setText(R.string.export_picture_progress_msg);
-            progressBar.setVisibility(View.VISIBLE);
-            new AsyncTask<Void, Void, Void>() {
-                @Override
-                protected Void doInBackground(Void... params) {
-                    beginExportingAsPicture();
-                    return null;
-                }
 
-                @Override
-                protected void onPostExecute(Void aVoid) {
-                    super.onPostExecute(aVoid);
-                    progressBar.setVisibility(View.GONE);
-                    new AlertDialog.Builder(HomeActivity.this)
-                            .setMessage(getString(R.string.pic_created, "<InternalStorage of your mobile>/" + Constants.EXPORT_FOLDER + "/" +
-                                    exportAsPictureFilename))
-                            .setPositiveButton("Ok", null)
-                            .show();
+            beginExportingAsPicture();
 
-                }
-            }.execute();
         }
     }
 
@@ -405,8 +372,29 @@ public class HomeActivity extends AppCompatActivity {
                 .setPositiveButton("Export", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        exportAsPicture();
                         dialog.dismiss();
+                        progressBarMsg.setText(R.string.export_picture_progress_msg);
+                        progressBar.setVisibility(View.VISIBLE);
+                        new AsyncTask<Void, Void, Void>() {
+                            @Override
+                            protected Void doInBackground(Void... params) {
+                                exportAsPicture();
+
+                                return null;
+                            }
+
+                            @Override
+                            protected void onPostExecute(Void aVoid) {
+                                super.onPostExecute(aVoid);
+                                progressBar.setVisibility(View.GONE);
+                                new AlertDialog.Builder(HomeActivity.this)
+                                        .setMessage(getString(R.string.pic_created, "<InternalStorage of your mobile>/" + Constants.EXPORT_FOLDER + "/" +
+                                                exportAsPictureFilename))
+                                        .setPositiveButton("Ok", null)
+                                        .show();
+
+                            }
+                        }.execute();
                     }
                 })
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
