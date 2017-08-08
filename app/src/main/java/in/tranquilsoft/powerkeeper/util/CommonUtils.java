@@ -2,6 +2,7 @@ package in.tranquilsoft.powerkeeper.util;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -9,6 +10,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Environment;
+import android.support.v7.app.AlertDialog;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
@@ -23,6 +25,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+import in.tranquilsoft.powerkeeper.R;
 import in.tranquilsoft.powerkeeper.data.PowerKeeperContract;
 import in.tranquilsoft.powerkeeper.data.PowerKeeperDao;
 
@@ -140,9 +143,14 @@ public class CommonUtils {
                         out.write(Constants.DB_LONG_FORMAT.format(new Date(timestamp.getTime())) + "," + desc + "\n");
                     }
                     out.flush();
-                    return exportFile.getAbsolutePath();
+                    return exportFile.getName();
+
+
                 } catch (IOException e) {
                     Log.e(TAG, "", e);
+
+
+
                 } finally {
                     if (out != null) {
                         try {

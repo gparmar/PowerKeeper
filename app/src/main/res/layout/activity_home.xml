@@ -31,4 +31,25 @@
         ads:adUnitId="@string/banner_ad_unit_id"
         >
     </com.google.android.gms.ads.AdView>
+    <LinearLayout android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_centerInParent="true"
+        android:gravity="center_horizontal"
+        android:background="@color/white"
+        android:visibility="gone"
+        android:padding="@dimen/general_padding">
+        <ProgressBar
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:indeterminateDrawable="@drawable/progress_inderminate"
+            />
+        <TextView android:id="@+id/progress_msg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            tools:text="Exporting data..."/>
+    </LinearLayout>
+
 </RelativeLayout>

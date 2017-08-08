@@ -13,13 +13,17 @@
     <string name="swipe_off_msg">Do you know that you can delete an event with a swipe off gesture.\n You could do it for Start/Stop events that happened inadvertently.</string>
     <string name="ok_lbl">OK</string>
     <string name="no_data_yet">There is no data yet.</string>
-    <string name="export_current_month_as_picture">Export Current Month as Picture</string>
+    <string name="export_current_month_as_picture">Export Chart as Picture</string>
     <string name="import_data">Import Data</string>
     <string name="export_data">Export Data</string>
     <string name="query_database">Query Database</string>
     <string name="clear_all_data">Clear all Data</string>
     <string name="refresh">Refresh</string>
     <string name="settings">Settings</string>
-    <string name="pic_created">The current month\'s picture has been created at this location: %1$s</string>
+    <string name="pic_created">A picture of the chart has been created at this location: %1$s</string>
+
     <string name="total_downtime_this_month">Total downtime this month:</string>
+    <string name="importing_data_msg">Please wait. Importing data...</string>
+    <string name="export_picture_progress_msg">Please wait. Exporting as Picture...</string>
+    <string name="exporting_data_progress_msg">Please wait. Exporting Data...</string>
 </resources>

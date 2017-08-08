@@ -10,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.support.annotation.NonNull;
@@ -21,12 +22,16 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -65,12 +70,18 @@ public class HomeActivity extends AppCompatActivity {
     AdView mAdView;
     @BindView(R.id.no_data)
     TextView noData;
+    @BindView(R.id.progressBar)
+    View progressBar;
+    @BindView(R.id.progress_msg)
+    TextView progressBarMsg;
 
     private DateCursorAdapter adapter;
     private FirebaseAnalytics mFirebaseAnalytics;
     private LinearLayoutManager layoutManager;
     private int verticalScrollPosition;
     private int selectedPosition;
+    private Date selectedDateForExport;
+    private String exportAsPictureFilename;
 
     private Cursor datesCursor;
 
@@ -119,7 +130,6 @@ public class HomeActivity extends AppCompatActivity {
         if (!BuildConfig.DEBUG) {
             menu.findItem(R.id.settings).setVisible(false);
             menu.findItem(R.id.database).setVisible(false);
-            menu.findItem(R.id.export_as_picture).setVisible(false);
         }
         return true;
     }
@@ -173,8 +183,45 @@ public class HomeActivity extends AppCompatActivity {
                     return true;
                 }
             }
-            CommonUtils.exportData(this);
-//            progressBar.setVisibility(View.GONE);
+            progressBarMsg.setText(R.string.exporting_data_progress_msg);
+            progressBar.setVisibility(View.VISIBLE);
+            new AsyncTask<Void, Void, Void>() {
+                private String filename;
+                @Override
+                protected Void doInBackground(Void... params) {
+                    try {
+                        filename = CommonUtils.exportData(HomeActivity.this);
+                    } catch (Exception e){
+                        Log.e(TAG,"",e);
+                    }
+                    return null;
+                }
+
+                @Override
+                protected void onPostExecute(Void aVoid) {
+                    super.onPostExecute(aVoid);
+                    progressBar.setVisibility(View.GONE);
+                    if (TextUtils.isEmpty(filename)) {
+                        new AlertDialog.Builder(HomeActivity.this).setTitle(R.string.exported_title)
+                                .setMessage(R.string.not_exported_msg)
+                                .setPositiveButton(R.string.ok_lbl, new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                    }
+                                }).show();
+                    } else {
+                        new AlertDialog.Builder(HomeActivity.this)
+                                .setMessage(HomeActivity.this.getString(R.string.exported_msg,
+                                        "<InternalStorage of your mobile>/" + Constants.EXPORT_FOLDER + "/" +
+                                                filename))
+                                .setPositiveButton(R.string.ok_lbl, null)
+                                .show();
+                    }
+                }
+            }.execute();
+
+
         } else if (item.getItemId() == R.id.import_data) {
             Intent intent = new Intent()
                     .setType("*/*")
@@ -201,7 +248,26 @@ public class HomeActivity extends AppCompatActivity {
                 }
             }
 
-            exportAsPicture();
+            progressBarMsg.setText(R.string.export_picture_progress_msg);
+            progressBar.setVisibility(View.VISIBLE);
+            new AsyncTask<Void, Void, Void>() {
+                @Override
+                protected Void doInBackground(Void... params) {
+                    beginExportingAsPicture();
+                    return null;
+                }
+
+                @Override
+                protected void onPostExecute(Void aVoid) {
+                    super.onPostExecute(aVoid);
+                    progressBar.setVisibility(View.GONE);
+                    new AlertDialog.Builder(HomeActivity.this)
+                            .setMessage(getString(R.string.pic_created, "<InternalStorage of your mobile>/" + Constants.EXPORT_FOLDER + "/" +
+                                    exportAsPictureFilename))
+                            .setPositiveButton(R.string.ok_lbl, null)
+                            .show();
+                }
+            }.execute();
 
         }
         return super.onOptionsItemSelected(item);
@@ -211,90 +277,198 @@ public class HomeActivity extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         Log.d(TAG, "Granted permission to write to local folders");
         if (requestCode == Constants.WRITE_EXTERNAL_STORAGE_REQ_CODE) {
-            String filepath = CommonUtils.exportData(this);
-            if (filepath != null) {
-                new AlertDialog.Builder(this).setTitle(R.string.exported_title)
-                        .setMessage(getString(R.string.exported_msg, filepath))
-                        .setPositiveButton(R.string.ok_lbl, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        }).show();
-            } else {
-                new AlertDialog.Builder(this).setTitle(R.string.exported_title)
-                        .setMessage(R.string.not_exported_msg)
-                        .setPositiveButton(R.string.ok_lbl, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                dialog.dismiss();
-                            }
-                        }).show();
-            }
+            progressBarMsg.setText(R.string.exporting_data_progress_msg);
+            progressBar.setVisibility(View.VISIBLE);
+            new AsyncTask<Void, Void, Void>() {
+                private String filename;
+                @Override
+                protected Void doInBackground(Void... params) {
+                    try {
+                        filename = CommonUtils.exportData(HomeActivity.this);
+                    } catch (Exception e){
+                        Log.e(TAG,"",e);
+                    }
+                    return null;
+                }
+
+                @Override
+                protected void onPostExecute(Void aVoid) {
+                    super.onPostExecute(aVoid);
+                    progressBar.setVisibility(View.GONE);
+                    if (TextUtils.isEmpty(filename)) {
+                        new AlertDialog.Builder(HomeActivity.this).setTitle(R.string.exported_title)
+                                .setMessage(R.string.not_exported_msg)
+                                .setPositiveButton(R.string.ok_lbl, new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        dialog.dismiss();
+                                    }
+                                }).show();
+                    } else {
+                        new AlertDialog.Builder(HomeActivity.this)
+                                .setMessage(HomeActivity.this.getString(R.string.exported_msg,
+                                        "<InternalStorage of your mobile>/" + Constants.EXPORT_FOLDER + "/" +
+                                                filename))
+                                .setPositiveButton(R.string.ok_lbl, null)
+                                .show();
+                    }
+                }
+            }.execute();
+
         } else if (requestCode == Constants.EXPORT_AS_PICTURE_REQ_CODE) {
-            exportAsPicture();
+            progressBarMsg.setText(R.string.export_picture_progress_msg);
+            progressBar.setVisibility(View.VISIBLE);
+            new AsyncTask<Void, Void, Void>() {
+                @Override
+                protected Void doInBackground(Void... params) {
+                    beginExportingAsPicture();
+                    return null;
+                }
+
+                @Override
+                protected void onPostExecute(Void aVoid) {
+                    super.onPostExecute(aVoid);
+                    progressBar.setVisibility(View.GONE);
+                    new AlertDialog.Builder(HomeActivity.this)
+                            .setMessage(getString(R.string.pic_created, "<InternalStorage of your mobile>/" + Constants.EXPORT_FOLDER + "/" +
+                                    exportAsPictureFilename))
+                            .setPositiveButton("Ok", null)
+                            .show();
+
+                }
+            }.execute();
         }
     }
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    protected void onActivityResult(int requestCode, int resultCode, final Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 123 && resultCode == RESULT_OK) {
-            Uri selectedfile = data.getData(); //The uri with the location of the file
+            progressBarMsg.setText(R.string.importing_data_msg);
+            progressBar.setVisibility(View.VISIBLE);
+            new AsyncTask<Void, Void, Void>() {
 
-            try {
-                BufferedReader in = new BufferedReader(new InputStreamReader(
-                        getContentResolver().openInputStream(selectedfile)));
-                String line;
-                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yy HH:mm:ss");
-                List<String> dates = new ArrayList<>();
-                while ((line = in.readLine()) != null) {
-                    if (line.contains("Time,Description")) {
-                        continue;
-                    }
-                    String tkns[] = line.split(",");
-                    if (tkns.length == 2) {
-                        ContentValues cv = new ContentValues();
+                @Override
+                protected Void doInBackground(Void... params) {
 
-                        cv.put(PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN,
-                                tkns[0]);
-                        cv.put(PowerKeeperContract.TimekeeperEntry.DESCRIPTION_COLUMN, tkns[1]);
+                    try {
+                        Uri selectedfile = data.getData(); //The uri with the location of the file
+                        BufferedReader in = new BufferedReader(new InputStreamReader(
+                                getContentResolver().openInputStream(selectedfile)));
+                        String line;
+                        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yy HH:mm:ss");
+                        List<String> dates = new ArrayList<>();
+                        while ((line = in.readLine()) != null) {
+                            if (line.contains("Time,Description")) {
+                                continue;
+                            }
+                            String tkns[] = line.split(",");
+                            if (tkns.length == 2) {
+                                ContentValues cv = new ContentValues();
 
-                        PowerKeeperDao.getInstance(this).insertTimekeeper(cv);
+                                cv.put(PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN,
+                                        tkns[0]);
+                                cv.put(PowerKeeperContract.TimekeeperEntry.DESCRIPTION_COLUMN, tkns[1]);
 
-                        String date = Constants.DB_SHORT_FORMAT.format(Constants.DB_LONG_FORMAT.parse(tkns[0]));
-                        if (!dates.contains(date)) {
-                            cv = new ContentValues();
-                            dates.add(date);
-                            cv.put(PowerKeeperContract.DateEntry.DATE_COLUMN,
-                                    date);
-                            PowerKeeperDao.getInstance(this).insertDatekeeper(cv);
+                                PowerKeeperDao.getInstance(HomeActivity.this).insertTimekeeper(cv);
+
+                                String date = Constants.DB_SHORT_FORMAT.format(Constants.DB_LONG_FORMAT.parse(tkns[0]));
+                                if (!dates.contains(date)) {
+                                    cv = new ContentValues();
+                                    dates.add(date);
+                                    cv.put(PowerKeeperContract.DateEntry.DATE_COLUMN,
+                                            date);
+                                    PowerKeeperDao.getInstance(HomeActivity.this).insertDatekeeper(cv);
+                                }
+                            }
                         }
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
+                    return null;
                 }
-                refreshCursor();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+
+                @Override
+                protected void onPostExecute(Void aVoid) {
+                    super.onPostExecute(aVoid);
+                    refreshCursor();
+                    progressBar.setVisibility(View.GONE);
+                }
+            }.execute();
         }
     }
 
+    private void beginExportingAsPicture() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setMessage("Select the month which you wanted to export.")
+                .setPositiveButton("Export", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        exportAsPicture();
+                        dialog.dismiss();
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+        View spinnerContainer = getLayoutInflater().inflate(R.layout.ask_month_dialog, null, false);
+        Cursor cursor = PowerKeeperDao.getInstance(this).getAllDates();
+        final List<String> dates = new ArrayList<>();
+        if (cursor != null) {
+
+            while (cursor.moveToNext()) {
+                try {
+                    String date = Constants.MONTH_YEAR_FORMAT.format(
+                            Constants.DB_SHORT_FORMAT.parse(
+                                    cursor.getString(cursor.getColumnIndex(
+                                            PowerKeeperContract.DateEntry.DATE_COLUMN))));
+                    if (!dates.contains(date)) {
+                        dates.add(date);
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "", e);
+                }
+            }
+        }
+        Spinner spinner = (Spinner) spinnerContainer.findViewById(R.id.spinner);
+        spinner.setAdapter(new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, dates));
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                try {
+                    String selectedMonth = dates.get(position);
+                    selectedDateForExport = Constants.DAY_MONTH_YEAR_FORMAT.parse(
+                            "01 " + selectedMonth);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
+        builder.setView(spinnerContainer);
+        builder.show();
+    }
+
     private void exportAsPicture() {
+
         LinearLayout linearLayout = new LinearLayout(this);
 
         linearLayout.setOrientation(LinearLayout.VERTICAL);
-        linearLayout.setLayoutParams(new LinearLayout.LayoutParams(640,
-                1000));
-        linearLayout.getLayoutParams().width = 640;
-        linearLayout.getLayoutParams().height = 1000;
+
         View view = recyclerView.getChildAt(0);
         Log.d(TAG, "ll width:" + linearLayout.getWidth() + ", height:" + linearLayout.getHeight());
         RedGreenBarRenderer redGreenBarRenderer = new RedGreenBarRenderer(this);
         try {
-            Date currDate =
-                    Constants.SHORT_FORMAT.parse(((TextView) view
-                            .findViewById(R.id.date_val)).getText().toString());
-            Date monthStart = CommonUtils.startOfMonth(currDate);
+
+            Date monthStart = CommonUtils.startOfMonth(selectedDateForExport);
             Date endOfToday = CommonUtils.endOfDay(new Date());
             Calendar cal = Calendar.getInstance();
             cal.setTime(monthStart);
@@ -312,10 +486,10 @@ public class HomeActivity extends AppCompatActivity {
                 newMonth = cal.get(Calendar.MONTH);
             }
             View summaryView = getLayoutInflater().inflate(R.layout.summary_item, linearLayout, false);
-            ((TextView)summaryView.findViewById(R.id.total_downtime)).setText(getString(R.string.hours,
+            ((TextView) summaryView.findViewById(R.id.total_downtime)).setText(getString(R.string.hours,
                     new DecimalFormat("#.##").format(accumulatedRediff)));
             linearLayout.addView(summaryView);
-            Bitmap bmp = CommonUtils.createBitmapFromView(this,linearLayout);
+            Bitmap bmp = CommonUtils.createBitmapFromView(this, linearLayout);
             FileOutputStream out = null;
             File file = null;
             try {
@@ -327,6 +501,7 @@ public class HomeActivity extends AppCompatActivity {
                 file = new File(exportDir, sdf.format(monthStart) + ".png");
                 out = new FileOutputStream(file);
                 bmp.compress(Bitmap.CompressFormat.PNG, 100, out); // bmp is your Bitmap instance
+                exportAsPictureFilename = file.getName();
                 // PNG is a lossless format, the compression factor (100) is ignored
             } catch (Exception e) {
                 e.printStackTrace();
@@ -335,9 +510,7 @@ public class HomeActivity extends AppCompatActivity {
                     if (out != null) {
                         out.close();
                     }
-                    new AlertDialog.Builder(this)
-                            .setMessage(getString(R.string.pic_created, file.getAbsolutePath()))
-                            .show();
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

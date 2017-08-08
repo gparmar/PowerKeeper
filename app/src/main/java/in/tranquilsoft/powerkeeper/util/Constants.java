@@ -15,6 +15,8 @@ public interface Constants {
     SimpleDateFormat DB_LONG_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     SimpleDateFormat DB_SHORT_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     SimpleDateFormat SHORT_FORMAT = new SimpleDateFormat("dd-MM-yyyy");
+    SimpleDateFormat MONTH_YEAR_FORMAT = new SimpleDateFormat("MMM yyyy");
+    SimpleDateFormat DAY_MONTH_YEAR_FORMAT = new SimpleDateFormat("dd MMM yyyy");
     String EVENT_TYPE = "EVENT_TYPE";
     String EVENT_TIME = "EVENT_TIME";
     String EVENT_TYPE_STARTED_CHARGING = "EVENT_TYPE_STARTED_CHARGING";
