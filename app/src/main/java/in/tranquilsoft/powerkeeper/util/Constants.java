@@ -22,5 +22,6 @@ public interface Constants {
 
     String DETAIL_SELECTED_DATE = "DETAIL_SELECTED_DATE";
     int WRITE_EXTERNAL_STORAGE_REQ_CODE = 10;
-    String EXPORT_FILE = "PowerSupplyTracker";
+    int EXPORT_AS_PICTURE_REQ_CODE = 11;
+    String EXPORT_FOLDER = "PowerSupplyTracker";
 }

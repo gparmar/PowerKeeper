@@ -1,6 +1,8 @@
 <resources>
     <string name="app_name">Power Supply Tracker</string>
-    <string name="total_downtime">Total Downtime: %1$s hours</string>
+    <string name="total_downtime">Downtime today: %1$s hrs</string>
+    <string name="sofar_downtime">So far this month: %1$s hrs</string>
+    <string name="hours">%1$s hrs</string>
     <!--test ads<string name="banner_ad_unit_id">ca-app-pub-3940256099942544/6300978111</string>-->
     <string name="admob_app_id">ca-app-pub-2044443480067509~4258231210</string>
     <string name="banner_ad_unit_id">ca-app-pub-2044443480067509/8033824693</string>
@@ -18,4 +20,6 @@
     <string name="clear_all_data">Clear all Data</string>
     <string name="refresh">Refresh</string>
     <string name="settings">Settings</string>
+    <string name="pic_created">The current month\'s picture has been created at this location: %1$s</string>
+    <string name="total_downtime_this_month">Total downtime this month:</string>
 </resources>

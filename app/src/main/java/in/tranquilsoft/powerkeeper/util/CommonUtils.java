@@ -1,13 +1,18 @@
 package in.tranquilsoft.powerkeeper.util;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Environment;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.io.File;
@@ -38,6 +43,7 @@ public class CommonUtils {
             return result;
         }
     }
+
     public static void putSharedPref(Context context, String name, Object object) {
         SharedPreferences prefs = context.getSharedPreferences("PowerKeeper", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
@@ -49,6 +55,7 @@ public class CommonUtils {
         SharedPreferences prefs = context.getSharedPreferences("PowerKeeper", Context.MODE_PRIVATE);
         return prefs.getString(name, defaultVal);
     }
+
     public static Date startOfToday() {
         Calendar today = Calendar.getInstance();
         today.set(Calendar.HOUR_OF_DAY, 0);
@@ -104,7 +111,7 @@ public class CommonUtils {
     public static String exportData(Context context) {
         Cursor cursor = PowerKeeperDao.getInstance(context).queryAll();
         if (cursor != null) {
-            File exportDir = new File(Environment.getExternalStorageDirectory() + File.separator + Constants.EXPORT_FILE);
+            File exportDir = new File(Environment.getExternalStorageDirectory() + File.separator + Constants.EXPORT_FOLDER);
             long freeBytesInternal = new File(context.getApplicationContext().getFilesDir().getAbsoluteFile().toString()).getFreeSpace();
             long megAvailable = freeBytesInternal / 1048576;
             boolean memoryErr = false;
@@ -151,34 +158,18 @@ public class CommonUtils {
         return null;
     }
 
-    private Bitmap getViewBitmap(View v) {
-        v.clearFocus();
-        v.setPressed(false);
+    public static Bitmap createBitmapFromView(Context context, View view) {
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        ((Activity) context).getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        view.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
-        boolean willNotCache = v.willNotCacheDrawing();
-        v.setWillNotCacheDrawing(false);
+        view.measure(displayMetrics.widthPixels, displayMetrics.heightPixels);
+        view.layout(0, 0, displayMetrics.widthPixels, displayMetrics.heightPixels);
+        view.buildDrawingCache();
+        Bitmap bitmap = Bitmap.createBitmap(view.getMeasuredWidth(), view.getMeasuredHeight(), Bitmap.Config.ARGB_8888);
 
-        // Reset the drawing cache background color to fully transparent
-        // for the duration of this operation
-        int color = v.getDrawingCacheBackgroundColor();
-        v.setDrawingCacheBackgroundColor(0);
-
-        if (color != 0) {
-            v.destroyDrawingCache();
-        }
-        v.buildDrawingCache();
-        Bitmap cacheBitmap = v.getDrawingCache();
-        if (cacheBitmap == null) {
-            Log.e(TAG, "failed getViewBitmap(" + v + ")", new RuntimeException());
-            return null;
-        }
-
-        Bitmap bitmap = Bitmap.createBitmap(cacheBitmap);
-
-        // Restore the view
-        v.destroyDrawingCache();
-        v.setWillNotCacheDrawing(willNotCache);
-        v.setDrawingCacheBackgroundColor(color);
+        Canvas canvas = new Canvas(bitmap);
+        view.draw(canvas);
 
         return bitmap;
     }

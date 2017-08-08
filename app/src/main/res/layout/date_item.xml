@@ -18,7 +18,6 @@
         android:background="@android:color/white"
         android:padding="2dp"
         android:textColor="@android:color/black"
-        android:textStyle="bold"
         android:translationZ="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -35,13 +34,14 @@
         android:background="@android:color/white"
         android:padding="2dp"
         android:textColor="@android:color/black"
-        android:textStyle="bold"
         android:translationZ="10dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toRightOf="@id/date_val"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="1"
         tools:text="5.5 hours" />
+
+
     <ImageView android:id="@+id/right_arrow"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
