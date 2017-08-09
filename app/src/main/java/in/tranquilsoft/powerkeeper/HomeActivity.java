@@ -373,6 +373,12 @@ public class HomeActivity extends AppCompatActivity {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
+                        if (selectedDateForExport == null) {
+                            Toast.makeText(HomeActivity.this,
+                                    R.string.no_date_selected_msg,
+                                    Toast.LENGTH_LONG).show();
+                            return;
+                        }
                         progressBarMsg.setText(R.string.export_picture_progress_msg);
                         progressBar.setVisibility(View.VISIBLE);
                         new AsyncTask<Void, Void, Void>() {

@@ -26,4 +26,5 @@
     <string name="importing_data_msg">Please wait. Importing data...</string>
     <string name="export_picture_progress_msg">Please wait. Exporting as Picture...</string>
     <string name="exporting_data_progress_msg">Please wait. Exporting Data...</string>
+    <string name="no_date_selected_msg">You need to select a month to export it as picture.</string>
 </resources>
