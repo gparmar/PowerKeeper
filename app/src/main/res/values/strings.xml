@@ -5,7 +5,7 @@
     <string name="hours">%1$s hrs</string>
     <!--test ads<string name="banner_ad_unit_id">ca-app-pub-3940256099942544/6300978111</string>-->
     <string name="admob_app_id">ca-app-pub-2044443480067509~4258231210</string>
-    <string name="banner_ad_unit_id">ca-app-pub-2044443480067509/8033824693</string>
+    <string name="banner_ad_unit_id">ca-app-pub-3310267032132556/7380275469</string>
     <string name="details_title">Details</string>
     <string name="exported_title">Exported</string>
     <string name="exported_msg">Your data has been exported to the file %1$s</string>
@@ -27,4 +27,9 @@
     <string name="export_picture_progress_msg">Please wait. Exporting as Picture...</string>
     <string name="exporting_data_progress_msg">Please wait. Exporting Data...</string>
     <string name="no_date_selected_msg">You need to select a month to export it as picture.</string>
+    <string name="exporting_data">Exporting data...</string>
+    <string name="add_data_point">Add an Event Manually</string>
+    <string name="pick_date">Pick Date</string>
+    <string name="pick_time">Pick Time</string>
+    <string name="date_and_time_rqd">You need to pick date and time.</string>
 </resources>

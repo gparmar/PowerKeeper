@@ -12,6 +12,7 @@ public interface Constants {
     String SWIPE_ALERT_SHOWN = "SWIPE_ALERT_SHOWN";
     String FIRST_EVENT_RECORDED="FIRST_EVENT_RECORDED";
     SimpleDateFormat LONG_FORMAT = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+    SimpleDateFormat LONG_FORMAT_MINUS_SECONDS = new SimpleDateFormat("dd-MM-yyyy HH:mm");
     SimpleDateFormat DB_LONG_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     SimpleDateFormat DB_SHORT_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     SimpleDateFormat SHORT_FORMAT = new SimpleDateFormat("dd-MM-yyyy");

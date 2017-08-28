@@ -1,5 +1,7 @@
 package in.tranquilsoft.powerkeeper;
 
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -30,9 +32,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.DatePicker;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import com.google.android.gms.ads.AdRequest;
@@ -82,6 +88,10 @@ public class HomeActivity extends AppCompatActivity {
     private int selectedPosition;
     private Date selectedDateForExport;
     private String exportAsPictureFilename;
+    private int mYear;
+    private int mMonth;
+    private int mDay;
+    private String[] eventTypes = {Constants.START_MESSAGE,Constants.STOP_MESSAGE};
 
     private Cursor datesCursor;
 
@@ -128,7 +138,7 @@ public class HomeActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main_menu, menu);
         if (!BuildConfig.DEBUG) {
-            menu.findItem(R.id.settings).setVisible(false);
+            //menu.findItem(R.id.settings).setVisible(false);
             menu.findItem(R.id.database).setVisible(false);
         }
         return true;
@@ -138,10 +148,107 @@ public class HomeActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.refresh) {
             refreshCursor();
-        } else if (item.getItemId() == R.id.settings) {
-            Intent intent = new Intent(this, SettingsActivity.class);
-            startActivity(intent);
-        } else if (item.getItemId() == R.id.delete_all) {
+        }
+        else if (item.getItemId() == R.id.add_data) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("Please select the date and time you wish to add:");
+            View view = getLayoutInflater().inflate(R.layout.date_time_dialog, null, false);
+            final EditText dateET = (EditText) view.findViewById(R.id.date_val);
+            final EditText timeET = (EditText) view.findViewById(R.id.time_val);
+            ((Button)view.findViewById(R.id.pickDateBtn)).setOnClickListener(
+                    new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            final Calendar c = Calendar.getInstance();
+                            mYear = c.get(Calendar.YEAR);
+                            mMonth = c.get(Calendar.MONTH);
+                            mDay = c.get(Calendar.DAY_OF_MONTH);
+                            DatePickerDialog datePickerDialog =
+                                    new DatePickerDialog(HomeActivity.this,
+                                            new DatePickerDialog.OnDateSetListener() {
+                                                @Override
+                                                public void onDateSet(DatePicker datePicker, int year, int month, int day) {
+                                                    dateET.setText(
+                                                            CommonUtils.getZeroBufferedInt(day)+
+                                                                    "-"+
+                                                                    CommonUtils.getZeroBufferedInt(month+1)+"-"+year);
+                                                }
+                                            },mYear,mMonth,mDay);
+                            datePickerDialog.show();
+                        }
+                    }
+            );
+            ((Button)view.findViewById(R.id.pickTimeBtn)).setOnClickListener(
+                    new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            final Calendar c = Calendar.getInstance();
+
+                            TimePickerDialog timePickerDialog =
+                                    new TimePickerDialog(HomeActivity.this,
+                                            new TimePickerDialog.OnTimeSetListener(){
+
+                                                @Override
+                                                public void onTimeSet(TimePicker timePicker, int hour, int minute) {
+                                                    timeET.setText(
+                                                            CommonUtils.getZeroBufferedInt(hour)+":"+
+                                                                    CommonUtils.getZeroBufferedInt(minute));
+                                                }
+                                            },c.get(Calendar.HOUR),c.get(Calendar.MINUTE),true);
+                            timePickerDialog.show();
+                        }
+                    }
+            );
+            final Spinner spinner = (Spinner)view.findViewById(R.id.event_type);
+            spinner.setAdapter(new ArrayAdapter<String>(HomeActivity.this,
+                    android.R.layout.simple_spinner_dropdown_item,eventTypes));
+            builder.setView(view);
+            builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    if (TextUtils.isEmpty(dateET.getText().toString())||
+                            TextUtils.isEmpty(timeET.getText().toString())) {
+                        Toast.makeText(HomeActivity.this,
+                                R.string.date_and_time_rqd,Toast.LENGTH_LONG).show();
+                    } else {
+                        Log.d(TAG, "Time:" + dateET.getText() + " " + timeET.getText() + ", Event:" + spinner.getSelectedItem());
+                        Date pickedDatetime = null;
+                        try {
+                            pickedDatetime = Constants.LONG_FORMAT_MINUS_SECONDS.parse(dateET.getText().toString()
+                                    + " " + timeET.getText().toString());
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
+                        //First check if this date is present in the dates table
+                        if (pickedDatetime != null) {
+                            Cursor cursor = PowerKeeperDao.getInstance(HomeActivity.this)
+                                    .getDatesTableRowByDate(Constants.DB_SHORT_FORMAT.format(pickedDatetime));
+                            if (cursor != null && cursor.moveToNext()) {
+                                //dates row is present
+
+                            } else {
+                                ContentValues cv = new ContentValues();
+                                cv.put(PowerKeeperContract.DateEntry.DATE_COLUMN,
+                                        Constants.DB_SHORT_FORMAT.format(pickedDatetime));
+                                PowerKeeperDao.getInstance(HomeActivity.this).insertDatekeeper(cv);
+                            }
+                            ContentValues cv = new ContentValues();
+                            cv.put(PowerKeeperContract.TimekeeperEntry.TIMESTAMP_COLUMN,
+                                    Constants.DB_LONG_FORMAT.format(pickedDatetime));
+                            cv.put(PowerKeeperContract.TimekeeperEntry.DESCRIPTION_COLUMN, spinner.getSelectedItem().toString());
+
+                            PowerKeeperDao.getInstance(HomeActivity.this).insertTimekeeper(cv);
+                        }
+                    }
+                }
+            }).show();
+
+        }
+//        else if (item.getItemId() == R.id.settings) {
+//            Intent intent = new Intent(this, SettingsActivity.class);
+//            startActivity(intent);
+//        }
+        else if (item.getItemId() == R.id.delete_all) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Warning")
                     .setMessage("This will clear all the previous history.")

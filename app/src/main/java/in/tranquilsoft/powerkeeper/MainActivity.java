@@ -1,6 +1,8 @@
 package in.tranquilsoft.powerkeeper;
 
+import android.app.DatePickerDialog;
 import android.app.Dialog;
+import android.app.TimePickerDialog;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -27,7 +29,13 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.DatePicker;
+import android.widget.EditText;
 import android.widget.RadioButton;
+import android.widget.Spinner;
+import android.widget.TimePicker;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
@@ -39,6 +47,7 @@ import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -71,6 +80,11 @@ public class MainActivity extends AppCompatActivity {
     private String mChosenFile;
     private static final String FTYPE = ".csv";
     private static final int DIALOG_LOAD_FILE = 1000;
+
+    private int mYear;
+    private int mMonth;
+    private int mDay;
+    private String[] eventTypes = {Constants.EVENT_TYPE_STARTED_CHARGING,Constants.EVENT_TYPE_STOPPED_CHARGING};
 
     private BroadcastReceiver dataChangeRcvr = new BroadcastReceiver() {
         @Override
@@ -341,9 +355,62 @@ public class MainActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.refresh) {
             refreshPage();
-        } else if (item.getItemId() == R.id.settings) {
-            Intent intent = new Intent(this, SettingsActivity.class);
-            startActivity(intent);
+        } else if (item.getItemId() == R.id.add_data) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setMessage("Please select the date and time you wish to add:");
+            View view = getLayoutInflater().inflate(R.layout.date_time_dialog, null, false);
+            final EditText dateET = (EditText) view.findViewById(R.id.date_val);
+            final EditText timeET = (EditText) view.findViewById(R.id.time_val);
+            ((Button)view.findViewById(R.id.pickDateBtn)).setOnClickListener(
+                    new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            final Calendar c = Calendar.getInstance();
+                            mYear = c.get(Calendar.YEAR);
+                            mMonth = c.get(Calendar.MONTH);
+                            mDay = c.get(Calendar.DAY_OF_MONTH);
+                            DatePickerDialog datePickerDialog =
+                                    new DatePickerDialog(MainActivity.this,
+                                            new DatePickerDialog.OnDateSetListener() {
+                                                @Override
+                                                public void onDateSet(DatePicker datePicker, int year, int month, int day) {
+                                                    dateET.setText(day+"-"+(month+1)+"-"+year);
+                                                }
+                                            },mYear,mMonth,mDay);
+                            datePickerDialog.show();
+                        }
+                    }
+            );
+            ((Button)view.findViewById(R.id.pickTimeBtn)).setOnClickListener(
+                    new View.OnClickListener() {
+                        @Override
+                        public void onClick(View view) {
+                            final Calendar c = Calendar.getInstance();
+
+                            TimePickerDialog timePickerDialog =
+                                    new TimePickerDialog(MainActivity.this,
+                                            new TimePickerDialog.OnTimeSetListener(){
+
+                                                @Override
+                                                public void onTimeSet(TimePicker timePicker, int hour, int minute) {
+                                                    timeET.setText(hour+":"+minute);
+                                                }
+                                            },c.get(Calendar.HOUR),c.get(Calendar.MINUTE),true);
+                            timePickerDialog.show();
+                        }
+                    }
+            );
+            final Spinner spinner = (Spinner)view.findViewById(R.id.event_type);
+            spinner.setAdapter(new ArrayAdapter<String>(MainActivity.this,
+                    android.R.layout.simple_spinner_dropdown_item,eventTypes));
+            builder.setView(view);
+            builder.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialogInterface, int i) {
+                    Log.d(TAG,"Time:"+dateET.getText()+" "+timeET.getText()+", Event:"+spinner.getSelectedItem());
+                }
+            }).show();
+
         }
         else if (item.getItemId() == R.id.delete_all) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
